@@ -19,7 +19,7 @@ model.to(device)
 
 # Create dummy input (batch_size, time_steps, feature_dim)
 print("Expected dim_in:", model.dim_in)
-dummy_input = torch.randn(1, 256, 272).to(device)
+dummy_input = torch.randn(1, 1, 272).to(device)
 
 # export to ONNX
 torch.onnx.export(
