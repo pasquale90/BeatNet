@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.22)
+project(beatnet_infer)
+
+set(CMAKE_CXX_STANDARD 17)
+
+set(ORT_DIR "onnxruntime")
+include_directories("${ORT_DIR}/include")
+link_directories("${ORT_DIR}/lib") 
+
+add_executable(beatnet_infer inference.cpp)
+target_link_libraries(beatnet_infer PRIVATE onnxruntime)
