@@ -57,16 +57,16 @@ Output shape: [1, 3, 1]
 
 ## Integration related actions
 ref : https://arxiv.org/pdf/2108.03576
-# replicate pre-processing 
-- resample to 22050 samples per second
-- extract 272-d filterbank response vector for each frame
-- tensorize input data
-- ...??
-# integrate inference
-- integrate inference into AutoTempoDetection's callback function
-# replicate post-processing
-- ...??
-- detensorize output data
+- replicate pre-processing 
+    - resample to 22050 samples per second
+    - extract 272-d filterbank response vector for each frame
+    - tensorize input data
+    - ...??
+- integrate inference
+    - integrate inference into AutoTempoDetection's callback function
+- replicate post-processing
+    - ...??
+    - detensorize output data
 
 
 
