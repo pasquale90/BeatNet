@@ -3,6 +3,9 @@ import os
 sys.path.insert(0, os.path.abspath("../src"))
 import torch
 from BeatNet.BeatNet import BeatNet
+import onnx
+
+model_path = "beatnet_bda.onnx"
 
 # Initialize BeatNet
 estimator = BeatNet(1, mode='stream', inference_model='PF', plot=[], thread=False)
@@ -25,11 +28,17 @@ dummy_input = torch.randn(1, 1, 272).to(device)
 torch.onnx.export(
     model,
     dummy_input,
-    "beatnet_bda.onnx",
+    model_path,
     input_names=["input"],
     output_names=["output"],
     dynamic_axes={"input": {0: "batch", 1: "time"}, "output": {0: "batch", 2: "time"}},
     opset_version=17
 )
 
-print("Exported to beatnet_bda.onnx")
+print(f"Exported to {model_path}")
+
+try:
+    onnx.checker.check_model(model_path)
+    print("ONNX model is valid.")
+except:
+    print("Error: ONNX model is not valid...")
