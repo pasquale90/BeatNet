@@ -5,7 +5,7 @@ import torch
 from BeatNet.BeatNet import BeatNet
 
 # Initialize BeatNet
-estimator = BeatNet(1, mode='offline', inference_model='DBN', plot=[], thread=False)
+estimator = BeatNet(1, mode='stream', inference_model='PF', plot=[], thread=False)
 
 # Get the PyTorch model (BDA)
 model = estimator.model
