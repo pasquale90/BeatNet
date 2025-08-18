@@ -14,12 +14,17 @@ include_directories("${LIBSAMPLERATE_DIR}/include")
 link_directories("${LIBSAMPLERATE_DIR}/bin")
 link_directories("${LIBSAMPLERATE_DIR}/lib")
 
+set(FFTW3_DIR fftw)
+include_directories("${FFTW3_DIR}")
+link_directories("${FFTW3_DIR}")
+
 set(SOURCE_FILES 
     inference.cpp 
     resampler.cpp
+    frameprocessor.cpp
 )
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
-target_link_libraries(${PROJECT_NAME} PRIVATE onnxruntime samplerate)
+target_link_libraries(${PROJECT_NAME} PRIVATE onnxruntime samplerate fftw3f)

@@ -5,17 +5,19 @@
 #include "samplerate.h"
 #include <random>
 #include "resampler.h"
+#include "frameprocessor.h"
 
 #define SR 96000
-#define SR_BEATNET 22050
-#define BUFFER_SIZE 1024
+#define SR_BEATNET 22050 // user defined
+#define BUFFER_SIZE 256 // user defined
 #define FBANK_SIZE 272
 
 static Resampler resampler(SR, SR_BEATNET, BUFFER_SIZE);
+static FramedSignalProcessor signal_processor(SR_BEATNET);
 
 std::string modelPath("beatnet_bda.onnx");
 
-void preprocess(std::vector<float> &raw_input, std::vector<float> &preprocessed_input){ 
+bool preprocess(std::vector<float> &raw_input, std::vector<float> &preprocessed_input){ 
     // apply preprocessing steps
     std::cout<<"Preprocessing"<<std::endl;
 
@@ -24,8 +26,20 @@ void preprocess(std::vector<float> &raw_input, std::vector<float> &preprocessed_
     std::cout<<"raw_input size equals to "<<raw_input.size()<<std::endl;
     std::cout<<"resampled size equals to "<<resampled.size()<<std::endl;
 
+    // Apply framing
+    std::vector<float> frame;
+    bool valid_frame = signal_processor.process(resampled,frame);
+    if (!valid_frame)
+    {
+        std::cout<<"invalid frame and will be invalid for the first ~"<<1411/resampled.size()-1<<" frames"<<std::endl;
+        return false;
+    }
+
+    std::cout<<"valid frame - > processed_frames size = "<<frame.size()<<std::endl;
+    
     // set preprocessed_input
     // For now leave dummy
+
 }
 
 float randomFloatGenerator() {
@@ -79,41 +93,53 @@ int main()
     std::cout << "Input name: " << input_names[0] << std::endl;
     std::cout << "Output name: " << output_names[0] << std::endl;
 
-    std::cout << "Creating tensor..." << std::endl;
+    std::cout << "Extracting features..." << std::endl;
     // input raw data
+    int numBuffers = 30;
     std::vector<float> raw_input(BUFFER_SIZE);
-    std::generate(raw_input.begin(), raw_input.end(), randomFloatGenerator);
     std::vector<int64_t> input_shape = {1,1,FBANK_SIZE}; 
     std::vector<float> preprocessed_input(input_shape[0] * input_shape[1] * input_shape[2]);
-    std::generate(preprocessed_input.begin(), preprocessed_input.end(), randomFloatGenerator);
-    preprocess(raw_input,preprocessed_input);
-
     Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
-    Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
-        memory_info,
-        preprocessed_input.data(),
-        preprocessed_input.size(),
-        input_shape.data(),
-        input_shape.size()
-    );
-
-    std::cout<<"Running Inference.."<<std::endl;
     Ort::RunOptions run_options{nullptr};
-    auto output_tensors = session.Run(
-        run_options,
-        input_names,
-        &input_tensor,
-        1,  // one input tensor
-        output_names,
-        1   // one output tensor
-    );
-
-    std::cout<<"Inferece completed!"<<std::endl;
-
-    float* output_data = output_tensors[0].GetTensorMutableData<float>();
     
-    std::cout << "Output sample: " << output_data[0] << std::endl;
-    printOutputShape(output_tensors);
+    for (int i=0; i<numBuffers; ++i){
+        
+        std::cout << "\nIteration: " << i << std::endl;
+        std::cout<<"raw_input size "<<raw_input.size()<<std::endl;
+        std::cout<<"preprocessed_input size "<<preprocessed_input.size()<<std::endl;
+        
+        std::generate(raw_input.begin(), raw_input.end(), randomFloatGenerator);
+        std::generate(preprocessed_input.begin(), preprocessed_input.end(), randomFloatGenerator);
+        bool valid_frame = preprocess(raw_input,preprocessed_input);
 
+        if(valid_frame){
+
+            
+            Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
+                memory_info,
+                preprocessed_input.data(),
+                preprocessed_input.size(),
+                input_shape.data(),
+                input_shape.size()
+            );
+
+            std::cout<<"Running Inference.."<<std::endl;
+            auto output_tensors = session.Run(
+                run_options,
+                input_names,
+                &input_tensor,
+                1,  // one input tensor
+                output_names,
+                1   // one output tensor
+            );
+
+            std::cout<<"Inferece completed!"<<std::endl;
+
+            float* output_data = output_tensors[0].GetTensorMutableData<float>();
+            
+            std::cout << "Output sample: " << output_data[0] << std::endl;
+            printOutputShape(output_tensors);
+        }
+    }
     return 0;
 }
