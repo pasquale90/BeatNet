@@ -2,9 +2,31 @@
 #include <iostream>
 #include <string>
 #include <filesystem>
+#include "samplerate.h"
 #include <random>
+#include "resampler.h"
+
+#define SR 96000
+#define SR_BEATNET 22050
+#define BUFFER_SIZE 1024
+#define FBANK_SIZE 272
+
+static Resampler resampler(SR, SR_BEATNET, BUFFER_SIZE);
 
 std::string modelPath("beatnet_bda.onnx");
+
+void preprocess(std::vector<float> &raw_input, std::vector<float> &preprocessed_input){ 
+    // apply preprocessing steps
+    std::cout<<"Preprocessing"<<std::endl;
+
+    // resample buffer to 22050 Hz
+    std::vector<float> resampled = resampler.resample(raw_input);       
+    std::cout<<"raw_input size equals to "<<raw_input.size()<<std::endl;
+    std::cout<<"resampled size equals to "<<resampled.size()<<std::endl;
+
+    // set preprocessed_input
+    // For now leave dummy
+}
 
 float randomFloatGenerator() {
     return static_cast<float>(rand()) / RAND_MAX;
@@ -58,15 +80,19 @@ int main()
     std::cout << "Output name: " << output_names[0] << std::endl;
 
     std::cout << "Creating tensor..." << std::endl;
-    std::vector<int64_t> input_shape = {1,1,272};
-    std::vector<float> input_tensor_values( 1 * 1 * 272); // store linearly in memory
-    std::generate(input_tensor_values.begin(), input_tensor_values.end(), randomFloatGenerator);
+    // input raw data
+    std::vector<float> raw_input(BUFFER_SIZE);
+    std::generate(raw_input.begin(), raw_input.end(), randomFloatGenerator);
+    std::vector<int64_t> input_shape = {1,1,FBANK_SIZE}; 
+    std::vector<float> preprocessed_input(input_shape[0] * input_shape[1] * input_shape[2]);
+    std::generate(preprocessed_input.begin(), preprocessed_input.end(), randomFloatGenerator);
+    preprocess(raw_input,preprocessed_input);
 
     Ort::MemoryInfo memory_info = Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
     Ort::Value input_tensor = Ort::Value::CreateTensor<float>(
         memory_info,
-        input_tensor_values.data(),
-        input_tensor_values.size(),
+        preprocessed_input.data(),
+        preprocessed_input.size(),
         input_shape.data(),
         input_shape.size()
     );

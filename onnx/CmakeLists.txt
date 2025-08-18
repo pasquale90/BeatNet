@@ -3,9 +3,23 @@ project(beatnet_infer)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# onnx dependency
 set(ORT_DIR "onnxruntime")
 include_directories("${ORT_DIR}/include")
 link_directories("${ORT_DIR}/lib") 
 
-add_executable(beatnet_infer inference.cpp)
-target_link_libraries(beatnet_infer PRIVATE onnxruntime)
+# libsamplerate dependency
+set(LIBSAMPLERATE_DIR libsamplerate)
+include_directories("${LIBSAMPLERATE_DIR}/include")
+link_directories("${LIBSAMPLERATE_DIR}/bin")
+link_directories("${LIBSAMPLERATE_DIR}/lib")
+
+set(SOURCE_FILES 
+    inference.cpp 
+    resampler.cpp
+)
+
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
+
+add_executable(${PROJECT_NAME} ${SOURCE_FILES})
+target_link_libraries(${PROJECT_NAME} PRIVATE onnxruntime samplerate)
