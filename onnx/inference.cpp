@@ -7,13 +7,19 @@
 #include "resampler.h"
 #include "frameprocessor.h"
 
-#define SR 96000
-#define SR_BEATNET 22050 // user defined
-#define BUFFER_SIZE 256 // user defined
-#define FBANK_SIZE 272
+constexpr int SR {96000};
+constexpr int SR_BEATNET {22050}; // user defined
+constexpr int BUFFER_SIZE {256}; // user defined
+constexpr double MS_FR_PAPER {0.093};
+constexpr double MS_HOP_PAPER {0.046}; 
+constexpr double MS_FR_GITHUB {0.064};
+constexpr double MS_HOP_GITHUB {0.020};
+constexpr int FRAME_LENGTH {static_cast<int>(SR_BEATNET*MS_FR_GITHUB)};
+constexpr int HOP_SIZE {static_cast<int>(SR_BEATNET*MS_HOP_GITHUB)};
+constexpr int FBANK_SIZE {272};
 
 static Resampler resampler(SR, SR_BEATNET, BUFFER_SIZE);
-static FramedSignalProcessor signal_processor(SR_BEATNET);
+static FramedSignalProcessor signal_processor(FRAME_LENGTH,HOP_SIZE);
 
 std::string modelPath("beatnet_bda.onnx");
 
@@ -31,7 +37,7 @@ bool preprocess(std::vector<float> &raw_input, std::vector<float> &preprocessed_
     bool valid_frame = signal_processor.process(resampled,frame);
     if (!valid_frame)
     {
-        std::cout<<"invalid frame and will be invalid for the first ~"<<1411/resampled.size()-1<<" frames"<<std::endl;
+        std::cout<<"invalid frame and will be invalid for the first ~"<<FRAME_LENGTH/resampled.size()-1<<" frames"<<std::endl;
         return false;
     }
 

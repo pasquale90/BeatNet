@@ -2,15 +2,9 @@
 #include <algorithm>
 #include <stdexcept>
 
-#define MS_FR_PAPER 0.093
-#define MS_HOP_PAPER 0.046 
-#define MS_FR_GITHUB 0.064
-#define MS_HOP_GITHUB 0.020
-
-FramedSignalProcessor::FramedSignalProcessor(int sample_rate)
-    : sample_rate(sample_rate),
-      frame_size(static_cast<int>(sample_rate * static_cast<float>(MS_FR_GITHUB))),
-      hop_size(static_cast<int>(sample_rate * static_cast<float>(MS_HOP_GITHUB))),
+FramedSignalProcessor::FramedSignalProcessor(int frameSize, int hopSize)
+    : frame_size(frameSize),
+      hop_size(hopSize),
       ring_size(frame_size*1.1),            // make it a litle bit longer
       write_pos(0),
       ring_buffer(ring_size, 0.0f),

@@ -5,10 +5,11 @@
 
 class FramedSignalProcessor {
 public:
-    FramedSignalProcessor(int sample_rate);
-    void reset();
+    FramedSignalProcessor(int frameSize, int hopSize);
 
     bool process(const std::vector<float>& input, std::vector<float>& frame_out);
+
+    void reset();
 
 private:
     int sample_rate;
