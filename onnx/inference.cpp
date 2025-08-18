@@ -6,6 +6,7 @@
 #include <random>
 #include "resampler.h"
 #include "frameprocessor.h"
+#include "fftprocessor.h"
 
 constexpr int SR {96000};
 constexpr int SR_BEATNET {22050}; // user defined
@@ -20,6 +21,7 @@ constexpr int FBANK_SIZE {272};
 
 static Resampler resampler(SR, SR_BEATNET, BUFFER_SIZE);
 static FramedSignalProcessor signal_processor(FRAME_LENGTH,HOP_SIZE);
+static FFTProcessor fft_processor(FRAME_LENGTH);
 
 std::string modelPath("beatnet_bda.onnx");
 
@@ -43,6 +45,10 @@ bool preprocess(std::vector<float> &raw_input, std::vector<float> &preprocessed_
 
     std::cout<<"valid frame - > processed_frames size = "<<frame.size()<<std::endl;
     
+    // compute fft
+    std::vector<float> spectrum = fft_processor.compute_fft(frame);
+    std::cout<<"spectrum computed with spectrum size = "<<spectrum.size()<<std::endl;
+
     // set preprocessed_input
     // For now leave dummy
 

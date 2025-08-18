@@ -22,6 +22,7 @@ set(SOURCE_FILES
     inference.cpp 
     resampler.cpp
     frameprocessor.cpp
+    fftprocessor.cpp
 )
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
