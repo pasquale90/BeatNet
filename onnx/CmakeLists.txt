@@ -19,7 +19,8 @@ include_directories("${FFTW3_DIR}")
 link_directories("${FFTW3_DIR}")
 
 set(SOURCE_FILES 
-    inference.cpp 
+    main.cpp
+    beatnet.cpp 
     resampler.cpp
     frameprocessor.cpp
     fftprocessor.cpp

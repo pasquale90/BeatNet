@@ -6,6 +6,9 @@
 class Resampler {
 public:
     Resampler(double input_sr, double output_sr, long bufferSize);
+    Resampler();
+    
+    void setup(double input_sr, double output_sr, long bufferSize);
 
     std::vector<float> resample(const std::vector<float>& input);
 

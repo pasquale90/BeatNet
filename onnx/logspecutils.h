@@ -14,5 +14,6 @@ std::vector<float> spectral_diff(const std::vector<float>& current,
 
 // Horizontally stack two vectors
 std::vector<float> hstack(const std::vector<float>& a, const std::vector<float>& b);
+void hstack(const std::vector<float>& a, const std::vector<float>& b, std::vector<float> &out);
 
 #endif

@@ -1,6 +1,7 @@
 #include "logspecutils.h"
 #include <cmath>
 #include <algorithm>
+#include <cassert>
 
 std::vector<float> log_compress(const std::vector<float>& input, float mul, float add) {
     std::vector<float> output(input.size());
@@ -29,10 +30,8 @@ std::vector<float> spectral_diff(const std::vector<float>& current,
     return diff;
 }
 
-std::vector<float> hstack(const std::vector<float>& a, const std::vector<float>& b) {
-    std::vector<float> out;
-    out.reserve(a.size() + b.size());
-    out.insert(out.end(), a.begin(), a.end());
-    out.insert(out.end(), b.begin(), b.end());
-    return out;
+void hstack(const std::vector<float>& a, const std::vector<float>& b, std::vector<float>& out) {
+    assert(out.size() == (a.size() + b.size()));
+    std::copy(a.begin(), a.end(), out.begin());
+    std::copy(b.begin(), b.end(), out.begin() + a.size());
 }
