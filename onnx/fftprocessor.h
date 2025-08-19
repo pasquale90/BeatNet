@@ -6,7 +6,7 @@
 
 class FFTProcessor {
 public:
-    FFTProcessor(int frame_size);
+    FFTProcessor(int frameSize, int fftSize);
     ~FFTProcessor();
 
     std::vector<float> compute_fft(const std::vector<float>& input_frame);

@@ -7,9 +7,11 @@
 #include "resampler.h"
 #include "frameprocessor.h"
 #include "fftprocessor.h"
+#include "filterbankprocessor.h"
+#include "logspecutils.h"
 
-constexpr int SR {96000};
-constexpr int SR_BEATNET {22050}; // user defined
+constexpr int SR {96000}; // user defined
+constexpr int SR_BEATNET {22050}; 
 constexpr int BUFFER_SIZE {256}; // user defined
 constexpr double MS_FR_PAPER {0.093};
 constexpr double MS_HOP_PAPER {0.046}; 
@@ -17,12 +19,14 @@ constexpr double MS_FR_GITHUB {0.064};
 constexpr double MS_HOP_GITHUB {0.020};
 constexpr int FRAME_LENGTH {static_cast<int>(SR_BEATNET*MS_FR_GITHUB)};
 constexpr int HOP_SIZE {static_cast<int>(SR_BEATNET*MS_HOP_GITHUB)};
+constexpr int FFT_SIZE { FRAME_LENGTH / 2 + 1};
 constexpr int FBANK_SIZE {272};
-
+constexpr int BANKS_PER_OCTAVE {16}; // {24};
 static Resampler resampler(SR, SR_BEATNET, BUFFER_SIZE);
 static FramedSignalProcessor signal_processor(FRAME_LENGTH,HOP_SIZE);
-static FFTProcessor fft_processor(FRAME_LENGTH);
-
+static FFTProcessor fft_processor(FRAME_LENGTH, FFT_SIZE);
+static FilterBankProcessor filterbank_processor(BANKS_PER_OCTAVE, FFT_SIZE, SR_BEATNET, 30.0f, 11025.0f, true, true);
+        
 std::string modelPath("beatnet_bda.onnx");
 
 bool preprocess(std::vector<float> &raw_input, std::vector<float> &preprocessed_input){ 
@@ -49,9 +53,21 @@ bool preprocess(std::vector<float> &raw_input, std::vector<float> &preprocessed_
     std::vector<float> spectrum = fft_processor.compute_fft(frame);
     std::cout<<"spectrum computed with spectrum size = "<<spectrum.size()<<std::endl;
 
-    // set preprocessed_input
-    // For now leave dummy
+    //filterbanks
+    std::vector<float> filters = filterbank_processor.apply(spectrum);
+    std::cout<<"filters computed with filters size = "<<filters.size()<<std::endl;
 
+    // log spectrogram utils
+    std::vector<float> log_fb = log_compress(filters);
+    std::cout<<"log_compress size = "<<log_fb.size()<<std::endl;    
+    static std::vector<float> prev_log_fb;
+    std::vector<float> diff = spectral_diff(log_fb, prev_log_fb);
+    std::cout<<"diff size = "<<diff.size()<<std::endl;
+    std::vector<float> final_input = hstack(log_fb, diff);
+    std::cout<<"final_input size = "<<final_input.size()<<std::endl;
+
+    // set preprocessed_input - finally!
+    std::copy(final_input.begin(), final_input.end(), preprocessed_input.begin());
 }
 
 float randomFloatGenerator() {

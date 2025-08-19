@@ -23,6 +23,8 @@ set(SOURCE_FILES
     resampler.cpp
     frameprocessor.cpp
     fftprocessor.cpp
+    filterbankprocessor.cpp
+    logspecutils.cpp
 )
 
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")

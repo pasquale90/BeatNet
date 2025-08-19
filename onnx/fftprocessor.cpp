@@ -4,11 +4,11 @@
 
 #define M_PI 3.14159
 
-FFTProcessor::FFTProcessor(int frame_size): 
-    frame_size(frame_size), 
-    fft_size(frame_size / 2 + 1),
-    hann_window(frame_size),
-    magnitudes(fft_size)
+FFTProcessor::FFTProcessor(int frameSize, int fftSize): 
+    frame_size(frameSize), 
+    fft_size(fftSize),
+    hann_window(frameSize),
+    magnitudes(fftSize)
 {
     // Allocate FFT buffers
     fft_input = (float*)fftwf_malloc(sizeof(float) * fft_size);
