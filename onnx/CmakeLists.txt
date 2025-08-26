@@ -1,25 +1,32 @@
 cmake_minimum_required(VERSION 3.22)
-project(beatnet_infer)
+set(LIBRARY_NAME beatnet)
+set(APP_NAME beatnet_infer)
+project(${APP_NAME})
 
 set(CMAKE_CXX_STANDARD 17)
 
-# onnx dependency
+# Set the libraries directories. Change if necessary. 
+# TODO: There is space for improvement here..
 set(ORT_DIR "onnxruntime")
+set(LIBSAMPLERATE_DIR libsamplerate)
+set(FFTW3_DIR fftw)
+
+option(BUILD_APP "Build the test application using main.cpp" OFF)
+
+# onnx dependency
 include_directories("${ORT_DIR}/include")
 link_directories("${ORT_DIR}/lib") 
 
 # libsamplerate dependency
-set(LIBSAMPLERATE_DIR libsamplerate)
 include_directories("${LIBSAMPLERATE_DIR}/include")
 link_directories("${LIBSAMPLERATE_DIR}/bin")
 link_directories("${LIBSAMPLERATE_DIR}/lib")
 
-set(FFTW3_DIR fftw)
+# fftw3
 include_directories("${FFTW3_DIR}")
 link_directories("${FFTW3_DIR}")
 
-set(SOURCE_FILES 
-    main.cpp
+set(LIB_SOURCE_FILES  
     beatnet.cpp 
     resampler.cpp
     frameprocessor.cpp
@@ -28,7 +35,31 @@ set(SOURCE_FILES
     logspecutils.cpp
 )
 
+set(SOURCE_FILE
+    main.cpp
+)
+
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
-add_executable(${PROJECT_NAME} ${SOURCE_FILES})
-target_link_libraries(${PROJECT_NAME} PRIVATE onnxruntime samplerate fftw3f)
+add_library(${LIBRARY_NAME} STATIC ${LIB_SOURCE_FILES})
+target_link_libraries(${LIBRARY_NAME} PUBLIC onnxruntime samplerate fftw3f)
+
+if(BUILD_APP)
+    add_executable(${APP_NAME} ${SOURCE_FILE})
+    target_link_libraries(${APP_NAME} PRIVATE ${LIBRARY_NAME})
+endif()
+
+if (BUILD_APP AND WIN32)
+
+    set(DLLS
+        "${CMAKE_SOURCE_DIR}/${ORT_DIR}/lib/onnxruntime.dll"
+        "${CMAKE_SOURCE_DIR}/${LIBSAMPLERATE_DIR}/bin/samplerate.dll"
+        "${CMAKE_SOURCE_DIR}/${FFTW3_DIR}/libfftw3f-3.dll"
+    )
+
+    add_custom_command(TARGET ${APP_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            ${DLLS}
+            $<TARGET_FILE_DIR:${APP_NAME}>
+    )
+endif()

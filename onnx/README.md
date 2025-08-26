@@ -12,8 +12,6 @@ onnxruntime=1.19
 librosa=0.10
 madmom=0.16
 
-
-
 # export the model to onnx
 
 ```
@@ -21,38 +19,39 @@ cd BeatNet/onnx
 python exportModel.py
 ```
 
-
 # test inference with ONNX in Python
 ```
 cd BeatNet/onnx
 python testModel.py
 ```
 
-## Build inference ONNX in C++
+## Build library
 ```
 cd BeatNet/onnx
 cmake -B build
 cmake --build build
 ```
 ## Test inference ONNX in C++
-Before testing, copy the library file from the `BeatNet/onnx/onnxruntime/lib` dir into the `build/Debug` dir.
+To create an executable for testing the library, compile with `BUILD_APP` enabled:
+
+```
+cmake -B build -D BUILD_APP=ON
+cmake --build build
+```
+
+Then run with:
+
 ```
 build/Debug/beatnet_infer
 ```
-The output should be something like:
+
+The indicative console output should print info regarding the output of the model after passing random data as input to the model.
 
 ```
 $ BeatNet\onnx> build\Debug\beatnet_infer.exe
-Starting inference...
-Loading model: beatnet_bda.onnx
-Fetching input/output names...
-Input name: input
-Output name: output
-Creating tensor...
-Running Inference..
-Inferece completed!
-Output sample: 0.800519
+...
 Output shape: [1, 3, 1]
+BeatNet Output: [-0.523651 -0.572624 1.00063 ]
 ```
 
 ## Integration related actions
