@@ -1,4 +1,4 @@
-#include "beatnet.h"
+#include "BeatNet.h"
 #include <filesystem>
 
 BeatNet::BeatNet(

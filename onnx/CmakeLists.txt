@@ -27,7 +27,7 @@ include_directories("${FFTW3_DIR}")
 link_directories("${FFTW3_DIR}")
 
 set(LIB_SOURCE_FILES  
-    beatnet.cpp 
+    BeatNet.cpp 
     resampler.cpp
     frameprocessor.cpp
     fftprocessor.cpp
