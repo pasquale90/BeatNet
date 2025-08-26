@@ -52,9 +52,9 @@ endif()
 if (BUILD_APP AND WIN32)
 
     set(DLLS
-        "${CMAKE_SOURCE_DIR}/${ORT_DIR}/lib/onnxruntime.dll"
-        "${CMAKE_SOURCE_DIR}/${LIBSAMPLERATE_DIR}/bin/samplerate.dll"
-        "${CMAKE_SOURCE_DIR}/${FFTW3_DIR}/libfftw3f-3.dll"
+        "${CMAKE_CURRENT_SOURCE_DIR}/${ORT_DIR}/lib/onnxruntime.dll"
+        "${CMAKE_CURRENT_SOURCE_DIR}/${LIBSAMPLERATE_DIR}/bin/samplerate.dll"
+        "${CMAKE_CURRENT_SOURCE_DIR}/${FFTW3_DIR}/libfftw3f-3.dll"
     )
 
     add_custom_command(TARGET ${APP_NAME} POST_BUILD
