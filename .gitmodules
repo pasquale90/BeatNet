@@ -1,0 +1,6 @@
+[submodule "onnx/libs/onnxruntime"]
+	path = onnx/libs/onnxruntime
+	url = https://github.com/microsoft/onnxruntime.git
+[submodule "onnx/libs/libsamplerate"]
+	path = onnx/libs/libsamplerate
+	url = https://github.com/libsndfile/libsamplerate.git
