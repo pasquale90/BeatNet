@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.22)
 set(LIBRARY_NAME beatnet)
 set(APP_NAME beatnet_infer)
-project(${APP_NAME})
+project(${LIBRARY_NAME})
 
 set(CMAKE_CXX_STANDARD 17)
 
@@ -33,21 +33,22 @@ endif()
 
 option(BUILD_APP "Build the test application using main.cpp" OFF)
 
-# onnx dependency
-include_directories("${ORT_DIR}/include")
-link_directories("${ORT_DIR}/lib") 
+set(BEATNET_INCLUDE_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    "${CMAKE_CURRENT_SOURCE_DIR}/${ORT_DIR}/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/${LIBSAMPLERATE_DIR}/include"
+)
 
-# libsamplerate dependency
-include_directories("${LIBSAMPLERATE_DIR}/include")
-link_directories("${LIBSAMPLERATE_DIR}/bin")
-link_directories("${LIBSAMPLERATE_DIR}/lib")
+set(BEATNET_SUBLIBS
+    "${CMAKE_CURRENT_SOURCE_DIR}/${ORT_DIR}/lib/onnxruntime.lib"
+    "${CMAKE_CURRENT_SOURCE_DIR}/${LIBSAMPLERATE_DIR}/lib/samplerate.lib"
+)
 
-# fft
 if(USE_FFTW3)
-    include_directories("${FFTW3_DIR}")
-    link_directories("${FFTW3_DIR}")
+    list(APPEND BEATNET_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/${FFTW3_DIR}")
+    list(APPEND BEATNET_SUBLIBS "${CMAKE_CURRENT_SOURCE_DIR}/${FFTW3_DIR}/fftw3f.lib")
 elseif(USE_KISS_FFT)
-    include_directories("${KISSFFT_DIR}")
+    list(APPEND BEATNET_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/${KISSFFT_DIR}")
 endif()
 
 set(LIB_SOURCE_FILES  
@@ -64,24 +65,16 @@ if(USE_KISS_FFT)
     list(APPEND LIB_SOURCE_FILES ${KISSFFT_DIR}/kiss_fftr.c)
 endif()
 
-set(BEATNET_LIBS
-    onnxruntime 
-    samplerate
-)
-
-if(USE_FFTW3)
-    list(APPEND BEATNET_LIBS fftw3f)
-endif()
 
 set(SOURCE_FILE
     main.cpp
 )
 
-include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
-
 add_library(${LIBRARY_NAME} STATIC ${LIB_SOURCE_FILES})
-# target_link_libraries(${LIBRARY_NAME} PUBLIC onnxruntime samplerate fftw3f)
-target_link_libraries(${LIBRARY_NAME} PUBLIC ${BEATNET_LIBS})
+
+target_include_directories(${LIBRARY_NAME} PUBLIC ${BEATNET_INCLUDE_DIRS})
+target_link_libraries(${LIBRARY_NAME} PUBLIC ${BEATNET_SUBLIBS})
+
 
 if(USE_FFTW3)
     target_compile_definitions(${LIBRARY_NAME} PUBLIC USE_FFTW3)
@@ -99,7 +92,6 @@ if (BUILD_APP AND WIN32)
     set(DLLS
         "${CMAKE_CURRENT_SOURCE_DIR}/${ORT_DIR}/lib/onnxruntime.dll"
         "${CMAKE_CURRENT_SOURCE_DIR}/${LIBSAMPLERATE_DIR}/bin/samplerate.dll"
-        # "${CMAKE_CURRENT_SOURCE_DIR}/${FFTW3_DIR}/libfftw3f-3.dll"
     )
     if(USE_FFTW3)
         list(APPEND DLLS "${CMAKE_CURRENT_SOURCE_DIR}/${FFTW3_DIR}/libfftw3f-3.dll")
