@@ -5,11 +5,31 @@ project(${APP_NAME})
 
 set(CMAKE_CXX_STANDARD 17)
 
+option(USE_KISS_FFT "Use the Kiss FFT library instead of FFTW3" ON)
+option(USE_FFTW3 "Use the FFTW3 library instead of Kiss FFT" OFF)
+if(USE_KISS_FFT AND USE_FFTW3)
+    message(FATAL_ERROR "USE_KISS_FFT and USE_FFTW3 cannot both be ON. Choose one.")
+elseif(NOT USE_KISS_FFT AND NOT USE_FFTW3)
+    message(FATAL_ERROR "No FFT backend selected.Please enable either USE_KISS_FFT or USE_FFTW3.")
+endif()
+
+if(USE_KISS_FFT)
+    message(STATUS "FFT backend: KissFFT")
+elseif(USE_FFTW3)
+    message(STATUS "FFT backend: FFTW3")
+else()
+    message(WARNING "No FFT backend selected!")
+endif()
+
 # Set the libraries directories. Change if necessary. 
 # TODO: There is space for improvement here..
 set(ORT_DIR "onnxruntime")
 set(LIBSAMPLERATE_DIR libsamplerate)
-set(FFTW3_DIR fftw)
+if(USE_FFTW3)
+    set(FFTW3_DIR fftw)
+elseif(USE_KISS_FFT)
+    set(KISSFFT_DIR kissfft)
+endif()
 
 option(BUILD_APP "Build the test application using main.cpp" OFF)
 
@@ -22,9 +42,13 @@ include_directories("${LIBSAMPLERATE_DIR}/include")
 link_directories("${LIBSAMPLERATE_DIR}/bin")
 link_directories("${LIBSAMPLERATE_DIR}/lib")
 
-# fftw3
-include_directories("${FFTW3_DIR}")
-link_directories("${FFTW3_DIR}")
+# fft
+if(USE_FFTW3)
+    include_directories("${FFTW3_DIR}")
+    link_directories("${FFTW3_DIR}")
+elseif(USE_KISS_FFT)
+    include_directories("${KISSFFT_DIR}")
+endif()
 
 set(LIB_SOURCE_FILES  
     BeatNet.cpp 
@@ -35,6 +59,20 @@ set(LIB_SOURCE_FILES
     logspecutils.cpp
 )
 
+if(USE_KISS_FFT)
+    list(APPEND LIB_SOURCE_FILES ${KISSFFT_DIR}/kiss_fft.c)
+    list(APPEND LIB_SOURCE_FILES ${KISSFFT_DIR}/kiss_fftr.c)
+endif()
+
+set(BEATNET_LIBS
+    onnxruntime 
+    samplerate
+)
+
+if(USE_FFTW3)
+    list(APPEND BEATNET_LIBS fftw3f)
+endif()
+
 set(SOURCE_FILE
     main.cpp
 )
@@ -42,7 +80,14 @@ set(SOURCE_FILE
 include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
 add_library(${LIBRARY_NAME} STATIC ${LIB_SOURCE_FILES})
-target_link_libraries(${LIBRARY_NAME} PUBLIC onnxruntime samplerate fftw3f)
+# target_link_libraries(${LIBRARY_NAME} PUBLIC onnxruntime samplerate fftw3f)
+target_link_libraries(${LIBRARY_NAME} PUBLIC ${BEATNET_LIBS})
+
+if(USE_FFTW3)
+    target_compile_definitions(${LIBRARY_NAME} PUBLIC USE_FFTW3)
+elseif(USE_KISS_FFT)
+    target_compile_definitions(${LIBRARY_NAME} PUBLIC USE_KISS_FFT)
+endif()
 
 if(BUILD_APP)
     add_executable(${APP_NAME} ${SOURCE_FILE})
@@ -54,8 +99,11 @@ if (BUILD_APP AND WIN32)
     set(DLLS
         "${CMAKE_CURRENT_SOURCE_DIR}/${ORT_DIR}/lib/onnxruntime.dll"
         "${CMAKE_CURRENT_SOURCE_DIR}/${LIBSAMPLERATE_DIR}/bin/samplerate.dll"
-        "${CMAKE_CURRENT_SOURCE_DIR}/${FFTW3_DIR}/libfftw3f-3.dll"
+        # "${CMAKE_CURRENT_SOURCE_DIR}/${FFTW3_DIR}/libfftw3f-3.dll"
     )
+    if(USE_FFTW3)
+        list(APPEND DLLS "${CMAKE_CURRENT_SOURCE_DIR}/${FFTW3_DIR}/libfftw3f-3.dll")
+    endif()
 
     add_custom_command(TARGET ${APP_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different

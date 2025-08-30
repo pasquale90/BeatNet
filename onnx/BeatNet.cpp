@@ -13,7 +13,7 @@ BeatNet::BeatNet(
     memory_info(Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault)),
     run_options(nullptr),
     signal_processor(FRAME_LENGTH, HOP_SIZE),
-    fft_processor(FRAME_LENGTH, FFT_SIZE),
+    fft_processor(FRAME_LENGTH, FFT_SIZE, FRAME_SIZE_POW2),
     filterbank_processor(BANKS_PER_OCTAVE, FFT_SIZE, SR_BEATNET, 30.0f, 11025.0f, true, true)
 {
     if (!std::filesystem::exists(modelPath)) {

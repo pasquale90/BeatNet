@@ -16,9 +16,10 @@ constexpr double MS_FR_PAPER {0.093};
 constexpr double MS_HOP_PAPER {0.046}; 
 constexpr double MS_FR_GITHUB {0.064};
 constexpr double MS_HOP_GITHUB {0.020};
-constexpr int FRAME_LENGTH {static_cast<int>(SR_BEATNET*MS_FR_GITHUB)};
-constexpr int HOP_SIZE {static_cast<int>(SR_BEATNET*MS_HOP_GITHUB)};
-constexpr int FFT_SIZE { FRAME_LENGTH / 2 + 1};
+constexpr int FRAME_LENGTH {static_cast<int>(SR_BEATNET*MS_FR_GITHUB)}; // 1411
+constexpr int HOP_SIZE {static_cast<int>(SR_BEATNET*MS_HOP_GITHUB)}; // 441
+constexpr int FFT_SIZE { FRAME_LENGTH / 2 + 1}; // 706
+constexpr int FRAME_SIZE_POW2 {2048}; // this is the minumum higher than FRAME_LENGTH (1411) that is a power-of-two value.
 constexpr int FBANK_SIZE {272};
 constexpr int BANKS_PER_OCTAVE {16}; // {24};;
 
