@@ -49,6 +49,11 @@ if(USE_FFTW3)
     list(APPEND BEATNET_SUBLIBS "${CMAKE_CURRENT_SOURCE_DIR}/${FFTW3_DIR}/fftw3f.lib")
 elseif(USE_KISS_FFT)
     list(APPEND BEATNET_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/${KISSFFT_DIR}")
+    add_library(libkissfft STATIC
+        ${KISSFFT_DIR}/kiss_fft.c
+        ${KISSFFT_DIR}/kiss_fftr.c
+    )
+    list(APPEND BEATNET_SUBLIBS libkissfft)
 endif()
 
 set(LIB_SOURCE_FILES  
@@ -59,12 +64,6 @@ set(LIB_SOURCE_FILES
     filterbankprocessor.cpp
     logspecutils.cpp
 )
-
-if(USE_KISS_FFT)
-    list(APPEND LIB_SOURCE_FILES ${KISSFFT_DIR}/kiss_fft.c)
-    list(APPEND LIB_SOURCE_FILES ${KISSFFT_DIR}/kiss_fftr.c)
-endif()
-
 
 set(SOURCE_FILE
     main.cpp
