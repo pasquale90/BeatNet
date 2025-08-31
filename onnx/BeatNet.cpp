@@ -93,7 +93,11 @@ void BeatNet::inference(std::vector<float>& output)
     );
 
     float* output_data = output_tensors[0].GetTensorMutableData<float>();
-    output = std::vector<float>(output_data, output_data + 3); // Output shape: [1, 3, 1]
+
+    for (int i = 0; i < output.size(); ++i) // Output shape: [1, 3, 1]
+    {
+        output[i] = output_data[i];
+    }
 
     printOutputShape(output_tensors);
 

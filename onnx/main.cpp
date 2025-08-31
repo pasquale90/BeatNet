@@ -11,7 +11,7 @@ int main() {
     tracker.setup(96000, 256);
 
     std::vector<float> raw_input(256);
-    std::vector<float> output;
+    std::vector<float> output(3);
 
     for (int i = 0; i < 30; ++i) {
         std::generate(raw_input.begin(), raw_input.end(), randomFloatGenerator);
