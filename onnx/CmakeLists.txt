@@ -5,17 +5,17 @@ project(${LIBRARY_NAME})
 
 set(CMAKE_CXX_STANDARD 17)
 
-option(USE_KISS_FFT "Use the Kiss FFT library instead of FFTW3" ON)
-option(USE_FFTW3 "Use the FFTW3 library instead of Kiss FFT" OFF)
-if(USE_KISS_FFT AND USE_FFTW3)
-    message(FATAL_ERROR "USE_KISS_FFT and USE_FFTW3 cannot both be ON. Choose one.")
-elseif(NOT USE_KISS_FFT AND NOT USE_FFTW3)
-    message(FATAL_ERROR "No FFT backend selected.Please enable either USE_KISS_FFT or USE_FFTW3.")
+option(ENABLE_KISSFFT "Use the Kiss FFT library instead of FFTW3" ON)
+option(ENABLE_FFTW3 "Use the FFTW3 library instead of Kiss FFT" OFF)
+if(ENABLE_KISSFFT AND ENABLE_FFTW3)
+    message(FATAL_ERROR "ENABLE_KISSFFT and ENABLE_FFTW3 cannot both be ON. Choose one.")
+elseif(NOT ENABLE_KISSFFT AND NOT ENABLE_FFTW3)
+    message(FATAL_ERROR "No FFT backend selected.Please enable either ENABLE_KISSFFT or ENABLE_FFTW3.")
 endif()
 
-if(USE_KISS_FFT)
+if(ENABLE_KISSFFT)
     message(STATUS "FFT backend: KissFFT")
-elseif(USE_FFTW3)
+elseif(ENABLE_FFTW3)
     message(STATUS "FFT backend: FFTW3")
 else()
     message(WARNING "No FFT backend selected!")
@@ -25,9 +25,9 @@ endif()
 # TODO: There is space for improvement here..
 set(ORT_DIR "onnxruntime")
 set(LIBSAMPLERATE_DIR libsamplerate)
-if(USE_FFTW3)
+if(ENABLE_FFTW3)
     set(FFTW3_DIR fftw)
-elseif(USE_KISS_FFT)
+elseif(ENABLE_KISSFFT)
     set(KISSFFT_DIR kissfft)
 endif()
 
@@ -44,10 +44,10 @@ set(BEATNET_SUBLIBS
     "${CMAKE_CURRENT_SOURCE_DIR}/${LIBSAMPLERATE_DIR}/lib/samplerate.lib"
 )
 
-if(USE_FFTW3)
+if(ENABLE_FFTW3)
     list(APPEND BEATNET_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/${FFTW3_DIR}")
     list(APPEND BEATNET_SUBLIBS "${CMAKE_CURRENT_SOURCE_DIR}/${FFTW3_DIR}/fftw3f.lib")
-elseif(USE_KISS_FFT)
+elseif(ENABLE_KISSFFT)
     list(APPEND BEATNET_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/${KISSFFT_DIR}")
     add_library(libkissfft STATIC
         ${KISSFFT_DIR}/kiss_fft.c
@@ -75,10 +75,10 @@ target_include_directories(${LIBRARY_NAME} PUBLIC ${BEATNET_INCLUDE_DIRS})
 target_link_libraries(${LIBRARY_NAME} PUBLIC ${BEATNET_SUBLIBS})
 
 
-if(USE_FFTW3)
-    target_compile_definitions(${LIBRARY_NAME} PUBLIC USE_FFTW3)
-elseif(USE_KISS_FFT)
-    target_compile_definitions(${LIBRARY_NAME} PUBLIC USE_KISS_FFT)
+if(ENABLE_FFTW3)
+    target_compile_definitions(${LIBRARY_NAME} PUBLIC ENABLE_FFTW3)
+elseif(ENABLE_KISSFFT)
+    target_compile_definitions(${LIBRARY_NAME} PUBLIC ENABLE_KISSFFT)
 endif()
 
 if(BUILD_APP)
@@ -92,7 +92,7 @@ if (BUILD_APP AND WIN32)
         "${CMAKE_CURRENT_SOURCE_DIR}/${ORT_DIR}/lib/onnxruntime.dll"
         "${CMAKE_CURRENT_SOURCE_DIR}/${LIBSAMPLERATE_DIR}/bin/samplerate.dll"
     )
-    if(USE_FFTW3)
+    if(ENABLE_FFTW3)
         list(APPEND DLLS "${CMAKE_CURRENT_SOURCE_DIR}/${FFTW3_DIR}/libfftw3f-3.dll")
     endif()
 

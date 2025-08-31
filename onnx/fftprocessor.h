@@ -2,10 +2,10 @@
 #define FFT_PROCESSOR_H
 
 #include <vector>
-#ifdef USE_FFTW3
+#ifdef ENABLE_FFTW3
 #include <fftw3.h>
 #endif 
-#ifdef USE_KISS_FFT
+#ifdef ENABLE_KISSFFT
 #include <kissfft/kiss_fft.h>
 #include <kissfft/kiss_fftr.h>
 #endif
@@ -23,12 +23,12 @@ private:
 
     std::vector<float> hann_window;
 
-#ifdef USE_FFTW3
+#ifdef ENABLE_FFTW3
     float* fft_input;
     fftwf_complex* fft_output;
     fftwf_plan fft_plan;
 #endif
-#ifdef USE_KISS_FFT
+#ifdef ENABLE_KISSFFT
     kiss_fftr_cfg fft_cfg;
     kiss_fft_scalar* fft_input;
     kiss_fft_cpx* fft_output;

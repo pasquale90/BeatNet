@@ -4,7 +4,7 @@
 
 #define M_PI 3.14159
 
-#ifdef USE_FFTW3
+#ifdef ENABLE_FFTW3
 FFTProcessor::FFTProcessor(int frameSize, int fftSize, int max_frameSize_pow2): 
     frame_size(frameSize), 
     fft_size(fftSize),
@@ -66,7 +66,7 @@ std::vector<float> FFTProcessor::compute_fft(const std::vector<float>& input_fra
 }
 
 #endif
-#ifdef USE_KISS_FFT
+#ifdef ENABLE_KISSFFT
 
 FFTProcessor::FFTProcessor(int frameSize, int fftSize, int max_frameSize_pow2):
     frame_size(frameSize),
