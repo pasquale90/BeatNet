@@ -23,32 +23,32 @@ endif()
 
 # Set the libraries directories. Change if necessary. 
 # TODO: There is space for improvement here..
-set(ORT_DIR "onnxruntime")
-set(LIBSAMPLERATE_DIR libsamplerate)
+set(ORT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/onnxruntime)
+set(LIBSAMPLERATE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libsamplerate)
 if(ENABLE_FFTW3)
-    set(FFTW3_DIR fftw)
+    set(FFTW3_DIR ${CMAKE_CURRENT_SOURCE_DIR}/fftw)
 elseif(ENABLE_KISSFFT)
-    set(KISSFFT_DIR kissfft)
+    set(KISSFFT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/kissfft)
 endif()
 
 option(BUILD_APP "Build the test application using main.cpp" OFF)
 
 set(BEATNET_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}
-    "${CMAKE_CURRENT_SOURCE_DIR}/${ORT_DIR}/include"
-    "${CMAKE_CURRENT_SOURCE_DIR}/${LIBSAMPLERATE_DIR}/include"
+    ${ORT_DIR}/include
+    ${LIBSAMPLERATE_DIR}/include
 )
 
 set(BEATNET_SUBLIBS
-    "${CMAKE_CURRENT_SOURCE_DIR}/${ORT_DIR}/lib/onnxruntime.lib"
-    "${CMAKE_CURRENT_SOURCE_DIR}/${LIBSAMPLERATE_DIR}/lib/samplerate.lib"
+    ${ORT_DIR}/lib/onnxruntime.lib
+    ${LIBSAMPLERATE_DIR}/lib/samplerate.lib
 )
 
 if(ENABLE_FFTW3)
-    list(APPEND BEATNET_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/${FFTW3_DIR}")
-    list(APPEND BEATNET_SUBLIBS "${CMAKE_CURRENT_SOURCE_DIR}/${FFTW3_DIR}/fftw3f.lib")
+    list(APPEND BEATNET_INCLUDE_DIRS ${FFTW3_DIR})
+    list(APPEND BEATNET_SUBLIBS ${FFTW3_DIR}/fftw3f.lib)
 elseif(ENABLE_KISSFFT)
-    list(APPEND BEATNET_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/${KISSFFT_DIR}")
+    list(APPEND BEATNET_INCLUDE_DIRS ${KISSFFT_DIR})
     add_library(libkissfft STATIC
         ${KISSFFT_DIR}/kiss_fft.c
         ${KISSFFT_DIR}/kiss_fftr.c
@@ -89,11 +89,11 @@ endif()
 if (BUILD_APP AND WIN32)
 
     set(DLLS
-        "${CMAKE_CURRENT_SOURCE_DIR}/${ORT_DIR}/lib/onnxruntime.dll"
-        "${CMAKE_CURRENT_SOURCE_DIR}/${LIBSAMPLERATE_DIR}/bin/samplerate.dll"
+        "${ORT_DIR}/lib/onnxruntime.dll"
+        "${LIBSAMPLERATE_DIR}/bin/samplerate.dll"
     )
     if(ENABLE_FFTW3)
-        list(APPEND DLLS "${CMAKE_CURRENT_SOURCE_DIR}/${FFTW3_DIR}/libfftw3f-3.dll")
+        list(APPEND DLLS "${FFTW3_DIR}/libfftw3f-3.dll")
     endif()
 
     add_custom_command(TARGET ${APP_NAME} POST_BUILD
