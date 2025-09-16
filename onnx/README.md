@@ -4,15 +4,7 @@
   - Download binaries from official repo ([here](https://github.com/microsoft/onnxruntime/releases/tag/v1.22.1)) and export in this directory under `onnxruntime` dir.
 - libsamplerate
 - FFTW3 or KissFFT
-- python, and a python env containing the following packages:
-  - python=3.9
-  - numpy=2.0
-  - scipy=1.10
-  - torch=2.7
-  - onnx=1.12
-  - onnxruntime=1.19
-  - librosa=0.10
-  - madmom=0.16
+- Python 3.9 and the dependencies listed in `requirements.txt`
 
 # export the model to onnx
 
