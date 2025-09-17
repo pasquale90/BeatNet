@@ -18,14 +18,16 @@ Resampler::Resampler(double input_sr, double output_sr, long bufferSize ):
 
 void Resampler::setup(double input_sr, double output_sr, long bufferSize)
 {
-    ratio = output_sr / input_sr; 
-    buffer_size = bufferSize;
-    output_frame_count = static_cast<long>(static_cast<float>(buffer_size) * ratio + 0.5) ; // round to nearest
-    silence.resize(output_frame_count, 0.0f);
-    output_buffer.resize(output_frame_count, 0.0f);
-    error = 0;
-    output_frame_count = static_cast<long>(static_cast<float>(buffer_size) * ratio + 0.5); // round to nearest
-    cb_data.total_frames = static_cast<long>(buffer_size);
+    if (bufferSize>0){
+        ratio = output_sr / input_sr; 
+        buffer_size = bufferSize;
+        output_frame_count = static_cast<long>(static_cast<float>(buffer_size) * ratio + 0.5) ; // round to nearest
+        silence.resize(output_frame_count, 0.0f);
+        output_buffer.resize(output_frame_count, 0.0f);
+        error = 0;
+        output_frame_count = static_cast<long>(static_cast<float>(buffer_size) * ratio + 0.5); // round to nearest
+        cb_data.total_frames = static_cast<long>(buffer_size);
+    }
 }
 
 long Resampler::callback(void* data, float** out_data) {

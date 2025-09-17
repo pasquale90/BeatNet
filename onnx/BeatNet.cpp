@@ -14,7 +14,8 @@ BeatNet::BeatNet(
     run_options(nullptr),
     signal_processor(FRAME_LENGTH, HOP_SIZE),
     fft_processor(FRAME_LENGTH, FFT_SIZE, FRAME_SIZE_POW2),
-    filterbank_processor(BANKS_PER_OCTAVE, FFT_SIZE, SR_BEATNET, 30.0f, 11025.0f, true, true)
+    filterbank_processor(BANKS_PER_OCTAVE, FFT_SIZE, SR_BEATNET, 30.0f, 11025.0f, true, true),
+    SR(0),bufferSize(0)
 {
     if (!std::filesystem::exists(modelPath)) {
         throw std::runtime_error("Model path does not exist: " + modelPath);

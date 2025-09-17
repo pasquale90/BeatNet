@@ -6,8 +6,13 @@ float randomFloatGenerator() {
 }
 
 int main() {
-
+    
     BeatNet tracker("beatnet_bda.onnx");
+    tracker.setup(44000, 512);
+
+    // just for testing things out...
+    tracker.setup(1,1);
+    tracker.setup(0,0);
     tracker.setup(96000, 256);
 
     std::vector<float> raw_input(256);
