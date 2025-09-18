@@ -13,6 +13,8 @@ cd BeatNet/onnx
 python exportModel.py
 ```
 
+Upon successful completion of this step, the weights will be saved in the current working directory as `beatnet_bda.onnx`. Feel free to use [Neutron](https://netron.app/) to inspect its structure.
+
 # test inference with ONNX in Python
 ```
 cd BeatNet/onnx
@@ -25,6 +27,7 @@ cd BeatNet/onnx
 cmake -B build
 cmake --build build
 ```
+
 ## Test inference ONNX in C++
 To create an executable for testing the library, compile with `BUILD_APP` enabled:
 
