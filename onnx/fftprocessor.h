@@ -6,8 +6,8 @@
 #include <fftw3.h>
 #endif 
 #ifdef ENABLE_KISSFFT
-#include <kissfft/kiss_fft.h>
-#include <kissfft/kiss_fftr.h>
+#include <kiss_fft.h>
+#include <kiss_fftr.h>
 #endif
 
 class FFTProcessor {

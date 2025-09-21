@@ -5,6 +5,9 @@ project(${LIBRARY_NAME})
 
 set(CMAKE_CXX_STANDARD 17)
 
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
+
 option(ENABLE_KISSFFT "Use the Kiss FFT library instead of FFTW3" ON)
 option(ENABLE_FFTW3 "Use the FFTW3 library instead of Kiss FFT" OFF)
 if(ENABLE_KISSFFT AND ENABLE_FFTW3)
@@ -13,22 +16,17 @@ elseif(NOT ENABLE_KISSFFT AND NOT ENABLE_FFTW3)
     message(FATAL_ERROR "No FFT backend selected.Please enable either ENABLE_KISSFFT or ENABLE_FFTW3.")
 endif()
 
-if(ENABLE_KISSFFT)
-    message(STATUS "FFT backend: KissFFT")
-elseif(ENABLE_FFTW3)
+# include dependencies ( they are downloaded within libs dir if they do not exist)
+include(${CMAKE_MODULE_PATH}/onnxruntime.cmake)
+include(${CMAKE_MODULE_PATH}/libsamplerate.cmake)
+if(ENABLE_FFTW3)
     message(STATUS "FFT backend: FFTW3")
+    include(${CMAKE_MODULE_PATH}/fftw3.cmake)
+elseif(ENABLE_KISSFFT)
+    message(STATUS "FFT backend: KissFFT")
+    include(${CMAKE_MODULE_PATH}/kissfft.cmake)
 else()
     message(WARNING "No FFT backend selected!")
-endif()
-
-# Set the libraries directories. Change if necessary. 
-# TODO: There is space for improvement here..
-set(ORT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/onnxruntime)
-set(LIBSAMPLERATE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libsamplerate)
-if(ENABLE_FFTW3)
-    set(FFTW3_DIR ${CMAKE_CURRENT_SOURCE_DIR}/fftw)
-elseif(ENABLE_KISSFFT)
-    set(KISSFFT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/kissfft)
 endif()
 
 option(BUILD_APP "Build the test application using main.cpp" OFF)
@@ -46,15 +44,13 @@ set(BEATNET_SUBLIBS
 
 if(ENABLE_FFTW3)
     list(APPEND BEATNET_INCLUDE_DIRS ${FFTW3_DIR})
-    list(APPEND BEATNET_SUBLIBS ${FFTW3_DIR}/fftw3f.lib)
+    list(APPEND BEATNET_SUBLIBS ${FFTW3_DIR}/libfftw3f-3.lib)
 elseif(ENABLE_KISSFFT)
     list(APPEND BEATNET_INCLUDE_DIRS ${KISSFFT_DIR})
-    add_library(libkissfft STATIC
-        ${KISSFFT_DIR}/kiss_fft.c
-        ${KISSFFT_DIR}/kiss_fftr.c
-    )
     list(APPEND BEATNET_SUBLIBS libkissfft)
 endif()
+
+message("BEATNET_INCLUDE_DIRS ${BEATNET_INCLUDE_DIRS}")
 
 set(LIB_SOURCE_FILES  
     BeatNet.cpp 
