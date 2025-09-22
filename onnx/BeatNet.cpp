@@ -23,8 +23,13 @@ BeatNet::BeatNet(
 
     session_options.SetIntraOpNumThreads(intraopnumthreads);
 
+#ifdef _WIN32
     std::wstring wModelPath(modelPath.begin(), modelPath.end());
     session = Ort::Session(env, wModelPath.c_str(), session_options);
+#else
+    session = Ort::Session(env, modelPath.c_str(), session_options);
+#endif
+
 
     Ort::AllocatedStringPtr input_name_ptr = session.GetInputNameAllocated(0, allocator);
     Ort::AllocatedStringPtr output_name_ptr = session.GetOutputNameAllocated(0, allocator);

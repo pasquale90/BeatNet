@@ -43,7 +43,6 @@ else() # linux/macos
     FetchContent_Declare(
         fftw3
         URL ${FFTW3_URL}
-        SOURCE_SUBDIR ${FFTW3_INSTALL_DIR}
     )
 
     FetchContent_MakeAvailable(fftw3)
