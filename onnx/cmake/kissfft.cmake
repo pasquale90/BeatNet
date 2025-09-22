@@ -10,13 +10,4 @@ FetchContent_Declare(
 )
 
 FetchContent_GetProperties(kissfft)
-if(NOT kissfft_POPULATED)
-    FetchContent_Populate(kissfft)
-endif()
-
-add_library(libkissfft STATIC
-    ${KISSFFT_DIR}/kiss_fft.c
-    ${KISSFFT_DIR}/kiss_fftr.c
-)
-
-
+FetchContent_Populate(kissfft) # FetchContent_Populate instead of FetchContent_MakeAvailable cause it requires pkg_config installed

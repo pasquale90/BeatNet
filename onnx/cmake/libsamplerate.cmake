@@ -1,4 +1,4 @@
-include(ExternalProject)
+include(FetchContent)
 
 set(LIBSAMPLERATE_VERSION "0.2.2")
 set(LIBSAMPLERATE_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs/libsamplerate")
@@ -10,33 +10,43 @@ if (WIN32)
         set(LIBSAMPLERATE_URL "https://github.com/libsndfile/libsamplerate/releases/download/${LIBSAMPLERATE_VERSION}/libsamplerate-${LIBSAMPLERATE_VERSION}-win32.zip")
     endif()
 
-    ExternalProject_Add(libsamplerate_binary
-        PREFIX ${CMAKE_BINARY_DIR}/_deps/libsamplerate
+    FetchContent_Declare(
+        libsamplerate_binary
         URL ${LIBSAMPLERATE_URL}
-        DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/_downloads
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> ${LIBSAMPLERATE_INSTALL_DIR}
-        LOG_DOWNLOAD ON
+        SOURCE_DIR ${LIBSAMPLERATE_INSTALL_DIR}
     )
+
+    FetchContent_GetProperties(libsamplerate_binary)
+    FetchContent_MakeAvailable(libsamplerate_binary)
+
+    add_custom_target(libsamplerate_ready COMMENT "libsamplerate has been fetched")
 
 else()
     # Linux / macOS: build from source
-    set(LIBSAMPLERATE_TAR_URL "https://github.com/libsndfile/libsamplerate/releases/download/${LIBSAMPLERATE_VERSION}/libsamplerate-${LIBSAMPLERATE_VERSION}.tar.xz")
-
-    ExternalProject_Add(libsamplerate_binary
-        PREFIX ${CMAKE_BINARY_DIR}/_deps/libsamplerate
-        URL ${LIBSAMPLERATE_TAR_URL}
-        DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/_downloads
-        CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=${LIBSAMPLERATE_INSTALL_DIR} --disable-shared
-        BUILD_COMMAND make -j
-        INSTALL_COMMAND make install
-        BUILD_IN_SOURCE 1
-        LOG_DOWNLOAD ON
-        LOG_CONFIGURE ON
-        LOG_BUILD ON
-        LOG_INSTALL ON
+    set(LIBSAMPLERATE_URL "https://github.com/libsndfile/libsamplerate/releases/download/${LIBSAMPLERATE_VERSION}/libsamplerate-${LIBSAMPLERATE_VERSION}.tar.xz")
+    
+    FetchContent_Declare(
+        libsamplerate_src
+        URL ${LIBSAMPLERATE_URL}
+        SOURCE_SUBDIR ${LIBSAMPLERATE_INSTALL_DIR}
     )
+
+    FetchContent_GetProperties(libsamplerate_src)
+    FetchContent_MakeAvailable(libsamplerate_src)
+
+    add_custom_target(libsamplerate_binary ALL
+        COMMAND ./configure --prefix=${LIBSAMPLERATE_INSTALL_DIR} --disable-shared
+        COMMAND make -j
+        COMMAND make install
+        WORKING_DIRECTORY ${libsamplerate_src_SOURCE_DIR}
+        COMMENT "Building and installing libsamplerate"
+    )
+
+    FetchContent_GetProperties(libsamplerate_binary)
+    FetchContent_MakeAvailable(libsamplerate_binary)
+
+    add_custom_target(libsamplerate_ready COMMENT "libsamplerate has been fetched")
+    
 endif()
 
 set(LIBSAMPLERATE_DIR ${LIBSAMPLERATE_INSTALL_DIR})

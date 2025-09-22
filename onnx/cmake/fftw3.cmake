@@ -1,4 +1,4 @@
-include(ExternalProject)
+include(FetchContent)
 
 set(FFTW3_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs/fftw")
 set(FFTW3_VERSION "3.3.10")
@@ -19,44 +19,43 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(FFTW3_DEF_FILE "${FFTW3_INSTALL_DIR}/libfftw3f-3.def")
     set(FFTW3_LIB_FILE "${FFTW3_INSTALL_DIR}/libfftw3f-3.lib")
 
-    ExternalProject_Add(fftw3_binary
-        PREFIX ${CMAKE_BINARY_DIR}/_deps/fftw3
+    FetchContent_Declare(
+        fftw3
         URL ${FFTW3_URL}
-        DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/_downloads
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> ${FFTW3_INSTALL_DIR}
-        LOG_DOWNLOAD ON
+        SOURCE_DIR ${FFTW3_INSTALL_DIR}
     )
+    FetchContent_GetProperties(fftw3)
+    FetchContent_MakeAvailable(fftw3)
 
     # generate the .lib file using lib.exe, if it doesnt exist
     add_custom_command(
         OUTPUT ${FFTW3_LIB_FILE}
         COMMAND lib.exe /def:${FFTW3_DEF_FILE} /machine:${ARCH_TAG} /out:${FFTW3_LIB_FILE}
-        DEPENDS fftw3_binary
         COMMENT "Generating ${FFTW3_LIB_FILE} from ${FFTW3_DEF_FILE}"
         VERBATIM
     )
 
-    add_custom_target(fftw3_importlib ALL
-        DEPENDS ${FFTW3_LIB_FILE}
-    )
+    add_custom_target(fftw3_ready ALL DEPENDS ${FFTW3_LIB_FILE})
     
 else() # linux/macos
     set(FFTW3_URL "https://www.fftw.org/fftw-${FFTW3_VERSION}.tar.gz")
 
-    ExternalProject_Add(fftw3_binary
-        PREFIX ${CMAKE_BINARY_DIR}/_deps/fftw3
+    FetchContent_Declare(
+        fftw3
         URL ${FFTW3_URL}
-        DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/_downloads
-        CONFIGURE_COMMAND <SOURCE_DIR>/configure --enable-float --disable-shared --prefix=${FFTW3_INSTALL_DIR}
-        BUILD_COMMAND make
-        INSTALL_COMMAND make install
-        LOG_DOWNLOAD ON
-        LOG_CONFIGURE ON
-        LOG_BUILD ON
-        LOG_INSTALL ON
+        SOURCE_SUBDIR ${FFTW3_INSTALL_DIR}
     )
+
+    FetchContent_MakeAvailable(fftw3)
+
+    add_custom_target(fftw3_ready ALL
+        COMMAND ./configure --enable-float --disable-shared --prefix=${FFTW3_INSTALL_DIR}
+        COMMAND make
+        COMMAND make install
+        WORKING_DIRECTORY ${fftw3_SOURCE_DIR}
+        COMMENT "Building and installing FFTW3"
+    )
+
 endif()
 
 set(FFTW3_DIR ${FFTW3_INSTALL_DIR})

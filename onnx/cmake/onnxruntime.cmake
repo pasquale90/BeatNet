@@ -1,6 +1,4 @@
-# cmake/FetchONNXRuntime.cmake
-
-include(ExternalProject)
+include(FetchContent)
 
 # Determine the current platform (OS and architecture)
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -42,19 +40,15 @@ set(ONNX_RUNTIME_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs/onnxruntime")
 
 if (NOT EXISTS "${ONNX_RUNTIME_DIR}/lib/onnxruntime.lib")
     message(STATUS "Downloading ONNX Runtime from ${ONNX_URL}")
-    ExternalProject_Add(onnxruntime_binary
-        PREFIX ${CMAKE_BINARY_DIR}/_deps/onnxruntime
+    FetchContent_Declare(
+        onnxruntime_binary
         URL ${ONNX_URL}
-        DOWNLOAD_DIR ${CMAKE_BINARY_DIR}/_downloads
-        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND ""
-        INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <SOURCE_DIR> ${ONNX_RUNTIME_DIR}
-        LOG_DOWNLOAD ON
+        SOURCE_DIR ${ONNX_RUNTIME_DIR}
     )
+    FetchContent_MakeAvailable(onnxruntime_binary)
+
 else()
     message(STATUS "ONNX Runtime already exists at ${ONNX_RUNTIME_DIR}, skipping download.")
 endif()
 
-# set(ONNX_RUNTIME_DIR  PARENT_SCOPE)
 set(ORT_DIR ${ONNX_RUNTIME_DIR})

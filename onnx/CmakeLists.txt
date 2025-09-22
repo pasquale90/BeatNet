@@ -1,15 +1,18 @@
 cmake_minimum_required(VERSION 3.22)
-set(LIBRARY_NAME beatnet)
+set(LIBRARY_NAME beatnetlib)
 set(APP_NAME beatnet_infer)
 project(${LIBRARY_NAME})
 
 set(CMAKE_CXX_STANDARD 17)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(BEATNET_CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+# list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
 option(ENABLE_KISSFFT "Use the Kiss FFT library instead of FFTW3" ON)
 option(ENABLE_FFTW3 "Use the FFTW3 library instead of Kiss FFT" OFF)
+option(BUILD_APP "Build the test application using main.cpp" OFF)
+
 if(ENABLE_KISSFFT AND ENABLE_FFTW3)
     message(FATAL_ERROR "ENABLE_KISSFFT and ENABLE_FFTW3 cannot both be ON. Choose one.")
 elseif(NOT ENABLE_KISSFFT AND NOT ENABLE_FFTW3)
@@ -17,19 +20,17 @@ elseif(NOT ENABLE_KISSFFT AND NOT ENABLE_FFTW3)
 endif()
 
 # include dependencies ( they are downloaded within libs dir if they do not exist)
-include(${CMAKE_MODULE_PATH}/onnxruntime.cmake)
-include(${CMAKE_MODULE_PATH}/libsamplerate.cmake)
+include(${BEATNET_CMAKE_MODULE_PATH}/onnxruntime.cmake)
+include(${BEATNET_CMAKE_MODULE_PATH}/libsamplerate.cmake)
 if(ENABLE_FFTW3)
     message(STATUS "FFT backend: FFTW3")
-    include(${CMAKE_MODULE_PATH}/fftw3.cmake)
+    include(${BEATNET_CMAKE_MODULE_PATH}/fftw3.cmake)
 elseif(ENABLE_KISSFFT)
     message(STATUS "FFT backend: KissFFT")
-    include(${CMAKE_MODULE_PATH}/kissfft.cmake)
+    include(${BEATNET_CMAKE_MODULE_PATH}/kissfft.cmake)
 else()
     message(WARNING "No FFT backend selected!")
 endif()
-
-option(BUILD_APP "Build the test application using main.cpp" OFF)
 
 set(BEATNET_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -46,6 +47,10 @@ if(ENABLE_FFTW3)
     list(APPEND BEATNET_INCLUDE_DIRS ${FFTW3_DIR})
     list(APPEND BEATNET_SUBLIBS ${FFTW3_DIR}/libfftw3f-3.lib)
 elseif(ENABLE_KISSFFT)
+    add_library(libkissfft STATIC
+        ${KISSFFT_DIR}/kiss_fft.c
+        ${KISSFFT_DIR}/kiss_fftr.c
+    )
     list(APPEND BEATNET_INCLUDE_DIRS ${KISSFFT_DIR})
     list(APPEND BEATNET_SUBLIBS libkissfft)
 endif()
@@ -67,9 +72,16 @@ set(SOURCE_FILE
 
 add_library(${LIBRARY_NAME} STATIC ${LIB_SOURCE_FILES})
 
+# make sure they are configured properly after downloading 
+if (WIN32)
+    add_dependencies(${LIBRARY_NAME} libsamplerate_ready)
+    if(ENABLE_FFTW3)
+        add_dependencies(${LIBRARY_NAME} fftw3_ready)
+    endif()
+endif()
+
 target_include_directories(${LIBRARY_NAME} PUBLIC ${BEATNET_INCLUDE_DIRS})
 target_link_libraries(${LIBRARY_NAME} PUBLIC ${BEATNET_SUBLIBS})
-
 
 if(ENABLE_FFTW3)
     target_compile_definitions(${LIBRARY_NAME} PUBLIC ENABLE_FFTW3)
