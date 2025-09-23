@@ -77,6 +77,7 @@ set(LIB_SOURCE_FILES
     fftprocessor.cpp
     filterbankprocessor.cpp
     logspecutils.cpp
+    dynamic_link.cpp
 )
 
 set(SOURCE_FILE

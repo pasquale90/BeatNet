@@ -4,7 +4,6 @@
 #include <vector>
 #include <string>
 #include "onnxruntime_cxx_api.h"
-#include "samplerate.h"
 #include "resampler.h"
 #include "frameprocessor.h"
 #include "fftprocessor.h"
