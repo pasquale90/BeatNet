@@ -5,11 +5,11 @@
 bool Resampler::loadLibsamplerate(){
     std::string libname;
     #if defined(_WIN32)
-        libname = PluginUtils::makePlatformLibName(dynamiclibname,"", ".dll");
+        libname = PluginUtils::makePlatformLibName("", dynamiclibname, ".dll");
     #elif defined(__APPLE__)
-        libname = PluginUtils::makePlatformLibName(dynamiclibname,"lib", ".dylib");
+        libname = PluginUtils::makePlatformLibName("lib", dynamiclibname, ".dylib");
     #else
-        libname = PluginUtils::makePlatformLibName(dynamiclibname,"lib", ".so");
+        libname = PluginUtils::makePlatformLibName("lib", dynamiclibname, ".so");
     #endif
 
     samplerate_handle = PluginUtils::loadDynamicLibrary(libname);

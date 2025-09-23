@@ -1,10 +1,42 @@
 #include "fftprocessor.h"
+#include "dynamic_link.h"
 #include <cmath>
 #include <cassert>
 
 #define M_PI 3.14159
 
 #ifdef ENABLE_FFTW3
+
+bool FFTProcessor::loadLibfftw3()
+{
+    std::string libname;
+    #if defined(_WIN32)
+        libname = PluginUtils::makePlatformLibName("lib", dynamiclibname, ".dll");
+    #elif defined(__APPLE__)
+        libname = PluginUtils::makePlatformLibName("lib", dynamiclibname, ".dylib");
+    #else
+        libname = PluginUtils::makePlatformLibName("lib", dynamiclibname, ".so");
+    #endif
+
+    fftw_handle = PluginUtils::loadDynamicLibrary(libname);
+    if (!fftw_handle) {
+        std::cerr << "Failed to load "<< libname << std::endl;
+        return false;
+    }
+
+    // Load symbols
+    fftwf_malloc_func = reinterpret_cast<fftwf_malloc_t>(PluginUtils::getSymbol(fftw_handle, "fftwf_malloc"));
+    fftwf_free_func = reinterpret_cast<fftwf_free_t>(PluginUtils::getSymbol(fftw_handle, "fftwf_free"));
+    fftwf_plan_dft_r2c_1d_func = reinterpret_cast<fftwf_plan_dft_r2c_1d_t>(PluginUtils::getSymbol(fftw_handle, "fftwf_plan_dft_r2c_1d"));
+    fftwf_execute_func = reinterpret_cast<fftwf_execute_t>(PluginUtils::getSymbol(fftw_handle, "fftwf_execute"));
+    fftwf_destroy_plan_func = reinterpret_cast<fftwf_destroy_plan_t>(PluginUtils::getSymbol(fftw_handle, "fftwf_destroy_plan"));
+
+    if (!fftwf_malloc_func || !fftwf_free_func || !fftwf_plan_dft_r2c_1d_func || !fftwf_execute_func || !fftwf_destroy_plan_func) {
+        std::cerr << "Failed to load one or more FFTW symbols" << std::endl;
+        return false;
+    }
+    return true;
+}
 FFTProcessor::FFTProcessor(int frameSize, int fftSize, int max_frameSize_pow2): 
     frame_size(frameSize), 
     fft_size(fftSize),
@@ -12,12 +44,18 @@ FFTProcessor::FFTProcessor(int frameSize, int fftSize, int max_frameSize_pow2):
     magnitudes(fftSize),
     frame_size_padded(max_frameSize_pow2)
 {
+    bool libffw3Loaded = loadLibfftw3();
+    if (!libffw3Loaded)
+    {
+        std::cerr << "Could not load fftw3 dll"<<std::endl;
+    }
+
     // Allocate FFT buffers
-    fft_input = (float*)fftwf_malloc(sizeof(float) * frame_size_padded);
-    fft_output = (fftwf_complex*)fftwf_malloc(sizeof(fftwf_complex) * (frame_size_padded / 2 + 1));
+    fft_input = (float*)fftwf_malloc_func(sizeof(float) * frame_size_padded);
+    fft_output = (fftwf_complex*)fftwf_malloc_func(sizeof(fftwf_complex) * (frame_size_padded / 2 + 1));
 
     // Create FFT plan
-    fft_plan = fftwf_plan_dft_r2c_1d(frame_size_padded, fft_input, fft_output, FFTW_MEASURE);
+    fft_plan = fftwf_plan_dft_r2c_1d_func(frame_size_padded, fft_input, fft_output, FFTW_MEASURE);
 
     // Generate Hann window
     initialize_hann_window();
@@ -25,9 +63,15 @@ FFTProcessor::FFTProcessor(int frameSize, int fftSize, int max_frameSize_pow2):
 
 FFTProcessor::~FFTProcessor()
 {
-    fftwf_destroy_plan(fft_plan);
-    fftwf_free(fft_input);
-    fftwf_free(fft_output);
+    fftwf_destroy_plan_func(fft_plan);
+    fftwf_free_func(fft_input);
+    fftwf_free_func(fft_output);
+
+    if (fftw_handle)
+    {
+        PluginUtils::unloadDynamicLibrary(fftw_handle);
+    }
+
 }
 
 void FFTProcessor::initialize_hann_window()
@@ -47,7 +91,7 @@ std::vector<float> FFTProcessor::compute_fft(const std::vector<float>& input_fra
     for (int i = frame_size; i < frame_size_padded; ++i)
         fft_input[i] = 0.0f;
 
-    fftwf_execute(fft_plan);
+    fftwf_execute_func(fft_plan);
 
     // take only the first ones...
     for (int i = 0; i < fft_size; ++i) {
