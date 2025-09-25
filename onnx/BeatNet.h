@@ -1,9 +1,9 @@
-#ifndef BEATNET_H
-#define BEATNET_H
+#ifndef BEATNETC_H
+#define BEATNETC_H
 
 #include <vector>
 #include <string>
-#include "onnxruntime_cxx_api.h"
+#include "onnxruntime_c_api.h"
 #include "resampler.h"
 #include "frameprocessor.h"
 #include "fftprocessor.h"
@@ -36,17 +36,18 @@ public:
 
     bool process(const std::vector<float>& raw_input, std::vector<float>& output);
     
-private:
+private:    
     float SR;
     int bufferSize;
 
     // ONNX Runtime
-    Ort::Env env;
-    Ort::SessionOptions session_options;
-    Ort::Session session;
-    Ort::AllocatorWithDefaultOptions allocator;
-    Ort::MemoryInfo memory_info;
-    Ort::RunOptions run_options;
+    const OrtApi* ort = nullptr;
+    OrtEnv* env;
+    OrtSessionOptions* session_options;
+    OrtSession* session;
+    OrtAllocator* allocator;
+    OrtMemoryInfo* memory_info;
+    OrtRunOptions* run_options;
     const char* input_name;
     const char* output_name;
 
@@ -66,7 +67,7 @@ private:
     // helper functions - preprocess for feature extraction and inference for model utilization
     bool preprocess(const std::vector<float>& raw_input, std::vector<float>& preprocessed_input);
     void inference(std::vector<float>& output);
-    void printOutputShape(std::vector<Ort::Value> &output_tensors);
+    void printOutputShape(OrtValue* output_tensors);
 
 };
 
