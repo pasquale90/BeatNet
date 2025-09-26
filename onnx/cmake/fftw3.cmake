@@ -57,4 +57,4 @@ else() # linux/macos
 
 endif()
 
-set(FFTW3_DIR ${FFTW3_INSTALL_DIR})
+set(FFTW3_DIR ${FFTW3_INSTALL_DIR} CACHE PATH "Path to FFTW3")

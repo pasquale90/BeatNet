@@ -2,13 +2,71 @@
 #include <filesystem>
 #include <iostream>
 
+bool BeatNet::loadONNXRuntime(const std::string& dynamicLibName) {
+    
+    std::string libname;
+    #if defined(_WIN32)
+        libname = PluginUtils::makePlatformLibName("", dynamicLibName, ".dll");
+    #elif defined(__APPLE__)
+        libname = PluginUtils::makePlatformLibName("lib", dynamicLibName, ".dylib");
+    #else
+        libname = PluginUtils::makePlatformLibName("lib", dynamicLibName, ".so");
+    #endif
+
+    onnxruntime_handle = PluginUtils::loadDynamicLibrary(libname);
+    if (!onnxruntime_handle) {
+        std::cerr << "Failed to load ONNX Runtime library: " << libname << std::endl;
+        return false;
+    }
+
+    auto getApiBase = reinterpret_cast<OrtGetApiBaseFn>(
+        PluginUtils::getSymbol(onnxruntime_handle, "OrtGetApiBase")
+    );
+    if (!getApiBase) {
+        std::cerr << "Failed to resolve OrtGetApiBase." << std::endl;
+        return false;
+    }
+    
+    ort = getApiBase()->GetApi(ORT_API_VERSION);
+    if (!ort) {
+        std::cerr << "Failed to get ONNX API." << std::endl;
+        return false;
+    }
+
+    CreateTensorWithDataAsOrtValue = ort->CreateTensorWithDataAsOrtValue;
+    Run = ort->Run;
+    GetTensorMutableData = ort->GetTensorMutableData;
+    ReleaseValue = ort->ReleaseValue;
+    GetTensorTypeAndShape = ort->GetTensorTypeAndShape;
+    GetDimensionsCount = ort->GetDimensionsCount;
+    GetDimensions = ort->GetDimensions;
+    ReleaseTensorTypeAndShapeInfo = ort->ReleaseTensorTypeAndShapeInfo;
+
+    CreateEnv = ort->CreateEnv;
+    CreateSessionOptions = ort->CreateSessionOptions;
+    SetIntraOpNumThreads = ort->SetIntraOpNumThreads;
+    CreateRunOptions = ort->CreateRunOptions;
+    CreateCpuMemoryInfo = ort->CreateCpuMemoryInfo;
+    GetAllocatorWithDefaultOptions = ort->GetAllocatorWithDefaultOptions;
+    CreateSession = ort->CreateSession;
+    SessionGetInputName = ort->SessionGetInputName;
+    SessionGetOutputName = ort->SessionGetOutputName;
+    AllocatorFree = ort->AllocatorFree;
+    ReleaseSession = ort->ReleaseSession;
+    ReleaseSessionOptions = ort->ReleaseSessionOptions;
+    ReleaseMemoryInfo = ort->ReleaseMemoryInfo;
+    ReleaseRunOptions = ort->ReleaseRunOptions;
+    ReleaseEnv = ort->ReleaseEnv;
+
+    return true;
+}
+
 BeatNet::BeatNet(
     const std::string& modelPath,
     const char* ortenvname,
     OrtLoggingLevel ortlogginglevel,
     int intraopnumthreads
 ): 
-    ort(OrtGetApiBase()->GetApi(ORT_API_VERSION)),
     env(nullptr), session(nullptr), session_options(nullptr),
     memory_info(nullptr), allocator(nullptr), run_options(nullptr),
     input_name(nullptr), output_name(nullptr),
@@ -17,26 +75,31 @@ BeatNet::BeatNet(
     filterbank_processor(BANKS_PER_OCTAVE, FFT_SIZE, SR_BEATNET, 30.0f, 11025.0f, true, true),
     SR(0),bufferSize(0)
 {
+
+    if (!loadONNXRuntime("onnxruntime")) {
+        throw std::runtime_error("Failed to load ONNX Runtime dynamically.");
+    }
+
     if (!std::filesystem::exists(modelPath)) {
         throw std::runtime_error("Model path does not exist: " + modelPath);
     }
 
-    ort->CreateEnv(ORT_LOGGING_LEVEL_WARNING, "BeatNet", &env);
-    ort->CreateSessionOptions(&session_options);
-    ort->SetIntraOpNumThreads(session_options, 1);
-    ort->CreateRunOptions(&run_options);
-    ort->CreateCpuMemoryInfo(OrtArenaAllocator, OrtMemTypeDefault, &memory_info);
-    ort->GetAllocatorWithDefaultOptions(&allocator);
+    CreateEnv(ORT_LOGGING_LEVEL_WARNING, "BeatNet", &env);
+    CreateSessionOptions(&session_options);
+    SetIntraOpNumThreads(session_options, 1);
+    CreateRunOptions(&run_options);
+    CreateCpuMemoryInfo(OrtArenaAllocator, OrtMemTypeDefault, &memory_info);
+    GetAllocatorWithDefaultOptions(&allocator);
 
 #ifdef _WIN32
     std::wstring wModelPath(modelPath.begin(), modelPath.end());
-    ort->CreateSession(env, wModelPath.c_str(), session_options, &session);
+    CreateSession(env, wModelPath.c_str(), session_options, &session);
 #else
-    ort->CreateSession(env, modelPath.c_str(), session_options, &session);
+    CreateSession(env, modelPath.c_str(), session_options, &session);
 #endif
 
-    ort->SessionGetInputName(session, 0, allocator, const_cast<char**>(&this->input_name));
-    ort->SessionGetOutputName(session, 0, allocator, const_cast<char**>(&this->output_name));
+    SessionGetInputName(session, 0, allocator, const_cast<char**>(&this->input_name));
+    SessionGetOutputName(session, 0, allocator, const_cast<char**>(&this->output_name));
 
     preprocessed_input.resize(FBANK_SIZE);
     log_fb.resize(FBANK_SIZE / 2);
@@ -48,14 +111,21 @@ BeatNet::BeatNet(
 
 BeatNet::~BeatNet()
 {
-    if (input_name) ort->AllocatorFree(allocator, const_cast<char*>(input_name));
-    if (output_name) ort->AllocatorFree(allocator, const_cast<char*>(output_name));
-    if (session) ort->ReleaseSession(session);
-    if (session_options) ort->ReleaseSessionOptions(session_options);
-    if (memory_info) ort->ReleaseMemoryInfo(memory_info);
-    if (run_options) ort->ReleaseRunOptions(run_options);
-    if (env) ort->ReleaseEnv(env);
+    if (input_name) AllocatorFree(allocator, const_cast<char*>(input_name));
+    if (output_name) AllocatorFree(allocator, const_cast<char*>(output_name));
+    if (session) ReleaseSession(session);
+    if (session_options) ReleaseSessionOptions(session_options);
+    if (memory_info) ReleaseMemoryInfo(memory_info);
+    if (run_options) ReleaseRunOptions(run_options);
+    if (env) ReleaseEnv(env);
+
+    if (onnxruntime_handle) {
+        PluginUtils::unloadDynamicLibrary(onnxruntime_handle);
+        onnxruntime_handle = nullptr;
+    }
+
 }
+
 
 void BeatNet::setup(double sampleRate, int samplesPerBlock) {
     SR = sampleRate;
@@ -93,7 +163,7 @@ bool BeatNet::process(const std::vector<float>& raw_input, std::vector<float>& o
 void BeatNet::inference(std::vector<float>& output) {
     OrtValue* input_tensor = nullptr;
 
-    ort->CreateTensorWithDataAsOrtValue(
+    CreateTensorWithDataAsOrtValue(
         memory_info,
         preprocessed_input.data(),
         preprocessed_input.size() * sizeof(float),
@@ -107,13 +177,13 @@ void BeatNet::inference(std::vector<float>& output) {
     const char* input_names[] = { input_name };
     const char* output_names[] = { output_name };
 
-    ort->Run(session, run_options,
+    Run(session, run_options,
              input_names, &input_tensor, 1,
              output_names, 1,
              &output_tensor);
 
     float* output_data = nullptr;
-    ort->GetTensorMutableData(output_tensor, (void**)&output_data);
+    GetTensorMutableData(output_tensor, (void**)&output_data);
 
     output.resize(3);  // Assuming [1, 3, 1] shape
     for (int i = 0; i < 3; ++i) {
@@ -122,18 +192,18 @@ void BeatNet::inference(std::vector<float>& output) {
 
     printOutputShape(output_tensor);
 
-    ort->ReleaseValue(input_tensor);
-    ort->ReleaseValue(output_tensor);
+    ReleaseValue(input_tensor);
+    ReleaseValue(output_tensor);
 }
 
 void BeatNet::printOutputShape(OrtValue* output_tensor) {
     OrtTensorTypeAndShapeInfo* shape_info;
-    ort->GetTensorTypeAndShape(output_tensor, &shape_info);
+    GetTensorTypeAndShape(output_tensor, &shape_info);
 
     size_t dim_count;
-    ort->GetDimensionsCount(shape_info, &dim_count);
+    GetDimensionsCount(shape_info, &dim_count);
     std::vector<int64_t> shape(dim_count);
-    ort->GetDimensions(shape_info, shape.data(), dim_count);
+    GetDimensions(shape_info, shape.data(), dim_count);
 
     std::cout << "Output shape: [";
     for (size_t i = 0; i < shape.size(); ++i) {
@@ -142,5 +212,5 @@ void BeatNet::printOutputShape(OrtValue* output_tensor) {
     }
     std::cout << "]" << std::endl;
 
-    ort->ReleaseTensorTypeAndShapeInfo(shape_info);
+    ReleaseTensorTypeAndShapeInfo(shape_info);
 }

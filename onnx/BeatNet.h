@@ -22,6 +22,50 @@ constexpr int FRAME_SIZE_POW2 {2048}; // this is the minumum higher than FRAME_L
 constexpr int FBANK_SIZE {272};
 constexpr int BANKS_PER_OCTAVE {16}; // {24};;
 
+using OrtGetApiBaseFn = const OrtApiBase* (*)();
+using OrtCreateTensorWithDataAsOrtValueFn = OrtStatus* (*)
+(
+    const OrtMemoryInfo*, 
+    void*, 
+    size_t, 
+    const int64_t*, 
+    size_t, 
+    ONNXTensorElementDataType, 
+    OrtValue**
+);
+using OrtRunFn = OrtStatus* (*)
+(
+    OrtSession*,
+    const OrtRunOptions*,
+    const char* const*,
+    const OrtValue* const*,
+    size_t,
+    const char* const*,
+    size_t,
+    OrtValue**
+);
+using OrtGetTensorMutableDataFn = OrtStatus* (*)(OrtValue*,void**);
+using OrtReleaseValueFn = void (*)(OrtValue*);
+using OrtGetTensorTypeAndShapeFn = OrtStatus* (*)(const OrtValue*, OrtTensorTypeAndShapeInfo**) noexcept;
+using OrtGetDimensionsCountFn = OrtStatus* (*)(const OrtTensorTypeAndShapeInfo*, size_t*);
+using OrtGetDimensionsFn = OrtStatus* (*)(const OrtTensorTypeAndShapeInfo*, int64_t*, size_t);
+using OrtReleaseTensorTypeAndShapeInfoFn = void (*)(OrtTensorTypeAndShapeInfo*);
+using OrtCreateEnvFn = OrtStatus* (ORT_API_CALL *)(OrtLoggingLevel, const char*, OrtEnv**) noexcept;
+using OrtCreateSessionOptionsFn = OrtStatus* (ORT_API_CALL *)(OrtSessionOptions**);
+using OrtSetIntraOpNumThreadsFn = OrtStatus* (ORT_API_CALL *)(OrtSessionOptions*, int);
+using OrtCreateRunOptionsFn = OrtStatus* (ORT_API_CALL *)(OrtRunOptions**);
+using OrtCreateCpuMemoryInfoFn = OrtStatus* (ORT_API_CALL *)(OrtAllocatorType, OrtMemType, OrtMemoryInfo**);
+using OrtGetAllocatorWithDefaultOptionsFn = OrtStatus* (ORT_API_CALL *)(OrtAllocator**);
+using OrtCreateSessionFn = OrtStatus* (ORT_API_CALL *)(const OrtEnv*, const ORTCHAR_T*, const OrtSessionOptions*, OrtSession**) noexcept;
+using OrtSessionGetInputNameFn = OrtStatus* (ORT_API_CALL *)(const OrtSession*, size_t, OrtAllocator*, char**) noexcept;
+using OrtSessionGetOutputNameFn = OrtStatus* (ORT_API_CALL *)(const OrtSession*, size_t, OrtAllocator*, char**) noexcept;
+using OrtAllocatorFreeFn = OrtStatus* (ORT_API_CALL *)(OrtAllocator*, void*) noexcept;
+using OrtReleaseSessionFn = void (ORT_API_CALL *)(OrtSession*);
+using OrtReleaseSessionOptionsFn = void (ORT_API_CALL *)(OrtSessionOptions*);
+using OrtReleaseMemoryInfoFn = void (ORT_API_CALL *)(OrtMemoryInfo*);
+using OrtReleaseRunOptionsFn = void (ORT_API_CALL *)(OrtRunOptions*);
+using OrtReleaseEnvFn = void (ORT_API_CALL *)(OrtEnv*);
+
 class BeatNet{
 public:
     BeatNet(
@@ -50,6 +94,33 @@ private:
     OrtRunOptions* run_options;
     const char* input_name;
     const char* output_name;
+
+    // run-time linking
+    void* onnxruntime_handle = nullptr;
+    bool loadONNXRuntime(const std::string& libname);
+    OrtCreateTensorWithDataAsOrtValueFn CreateTensorWithDataAsOrtValue = nullptr;
+    OrtRunFn Run = nullptr;
+    OrtGetTensorMutableDataFn GetTensorMutableData = nullptr;
+    OrtReleaseValueFn ReleaseValue = nullptr;
+    OrtGetTensorTypeAndShapeFn GetTensorTypeAndShape = nullptr;
+    OrtGetDimensionsCountFn GetDimensionsCount = nullptr;
+    OrtGetDimensionsFn GetDimensions = nullptr;
+    OrtReleaseTensorTypeAndShapeInfoFn ReleaseTensorTypeAndShapeInfo = nullptr;
+    OrtCreateEnvFn CreateEnv;
+    OrtCreateSessionOptionsFn CreateSessionOptions;
+    OrtSetIntraOpNumThreadsFn SetIntraOpNumThreads;
+    OrtCreateRunOptionsFn CreateRunOptions;
+    OrtCreateCpuMemoryInfoFn CreateCpuMemoryInfo;
+    OrtGetAllocatorWithDefaultOptionsFn GetAllocatorWithDefaultOptions;
+    OrtCreateSessionFn CreateSession;
+    OrtSessionGetInputNameFn SessionGetInputName;
+    OrtSessionGetOutputNameFn SessionGetOutputName;
+    OrtAllocatorFreeFn AllocatorFree;
+    OrtReleaseSessionFn ReleaseSession;
+    OrtReleaseSessionOptionsFn ReleaseSessionOptions;
+    OrtReleaseMemoryInfoFn ReleaseMemoryInfo;
+    OrtReleaseRunOptionsFn ReleaseRunOptions;
+    OrtReleaseEnvFn ReleaseEnv;
 
     // Preprocessing
     Resampler resampler;

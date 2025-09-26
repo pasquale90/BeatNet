@@ -51,4 +51,4 @@ else()
     message(STATUS "ONNX Runtime already exists at ${ONNX_RUNTIME_DIR}, skipping download.")
 endif()
 
-set(ORT_DIR ${ONNX_RUNTIME_DIR})
+set(ORT_DIR ${ONNX_RUNTIME_DIR} CACHE PATH "Path to ONNX Runtime")
