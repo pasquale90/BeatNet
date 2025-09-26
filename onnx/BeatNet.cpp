@@ -62,7 +62,7 @@ bool BeatNet::loadONNXRuntime(const std::string& dynamicLibName) {
 }
 
 BeatNet::BeatNet(
-    const std::string& modelPath,
+    std::string modelPath,
     const char* ortenvname,
     OrtLoggingLevel ortlogginglevel,
     int intraopnumthreads
@@ -80,9 +80,10 @@ BeatNet::BeatNet(
         throw std::runtime_error("Failed to load ONNX Runtime dynamically.");
     }
 
-    if (!std::filesystem::exists(modelPath)) {
-        throw std::runtime_error("Model path does not exist: " + modelPath);
-    }
+    if (modelPath.empty()){
+        modelPath = PluginUtils::getPluginDirectory() + '/' +defaultModelPath;}    
+    if ( !std::filesystem::exists(modelPath)) {
+        throw std::runtime_error("Model path does not exist: " + modelPath);}
 
     CreateEnv(ORT_LOGGING_LEVEL_WARNING, "BeatNet", &env);
     CreateSessionOptions(&session_options);

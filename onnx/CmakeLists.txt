@@ -5,6 +5,7 @@ project(${LIBRARY_NAME})
 
 set(CMAKE_CXX_STANDARD 17)
 
+set (BEATNET_ONNX_ROOTDIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH "Path to BeatNet/onnx directory")
 set(BEATNET_CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
@@ -124,3 +125,10 @@ if (BUILD_APP AND WIN32)
             $<TARGET_FILE_DIR:${APP_NAME}>
     )
 endif()
+
+# copy model weights into the dir where the 
+add_custom_command(TARGET ${LIBRARY_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${BEATNET_ONNX_ROOTDIR}/beatnet_bda.onnx"
+        $<TARGET_FILE_DIR:${LIBRARY_NAME}>
+)

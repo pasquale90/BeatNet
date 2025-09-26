@@ -7,7 +7,7 @@ float randomFloatGenerator() {
 
 int main() {
     
-    BeatNet tracker("beatnet_bda.onnx");
+    BeatNet tracker;
     tracker.setup(44000, 512);
 
     // just for testing things out...

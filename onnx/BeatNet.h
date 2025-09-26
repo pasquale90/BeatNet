@@ -69,7 +69,7 @@ using OrtReleaseEnvFn = void (ORT_API_CALL *)(OrtEnv*);
 class BeatNet{
 public:
     BeatNet(
-        const std::string& modelPath,
+        std::string modelPath = "",
         const char* ortenvname = "BeatNet",
         OrtLoggingLevel ortlogginglevel=ORT_LOGGING_LEVEL_WARNING,
         int intraopnumthreads =1
@@ -83,6 +83,7 @@ public:
 private:    
     float SR;
     int bufferSize;
+	const std::string defaultModelPath{ "beatnet_bda.onnx" };
 
     // ONNX Runtime
     const OrtApi* ort = nullptr;
