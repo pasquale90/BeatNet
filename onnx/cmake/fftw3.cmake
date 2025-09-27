@@ -48,7 +48,7 @@ else() # linux/macos
     FetchContent_MakeAvailable(fftw3)
 
     add_custom_target(fftw3_ready ALL
-        COMMAND ./configure --enable-float --disable-shared --prefix=${FFTW3_INSTALL_DIR}
+        COMMAND ./configure --enable-float --disable-static --enable-shared --prefix=${FFTW3_INSTALL_DIR}
         COMMAND make
         COMMAND make install
         WORKING_DIRECTORY ${fftw3_SOURCE_DIR}

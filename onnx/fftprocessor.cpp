@@ -11,7 +11,7 @@ bool FFTProcessor::loadLibfftw3()
 {
     std::string libname;
     #if defined(_WIN32)
-        libname = PluginUtils::makePlatformLibName("lib", dynamiclibname, ".dll");
+        libname = PluginUtils::makePlatformLibName("lib", dynamiclibname+"-3", ".dll");
     #elif defined(__APPLE__)
         libname = PluginUtils::makePlatformLibName("lib", dynamiclibname, ".dylib");
     #else

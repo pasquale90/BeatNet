@@ -38,7 +38,7 @@ else()
         FetchContent_MakeAvailable(libsamplerate_src)
 
         add_custom_target(libsamplerate_binary ALL
-            COMMAND ./configure --prefix=${LIBSAMPLERATE_INSTALL_DIR} --disable-shared
+            COMMAND ./configure --prefix=${LIBSAMPLERATE_INSTALL_DIR} --disable-static
             COMMAND make -j
             COMMAND make install
             WORKING_DIRECTORY ${libsamplerate_src_SOURCE_DIR}

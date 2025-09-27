@@ -36,7 +36,7 @@ private:
     fftwf_plan fft_plan;
 
     bool loadLibfftw3();
-    const std::string dynamiclibname = "fftw3f-3";
+    const std::string dynamiclibname = "fftw3f";
     void* fftw_handle = nullptr;
     fftwf_malloc_t fftwf_malloc_func = nullptr;
     fftwf_free_t fftwf_free_func = nullptr;

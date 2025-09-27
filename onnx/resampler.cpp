@@ -25,6 +25,7 @@ bool Resampler::loadLibsamplerate(){
         std::cerr << "One or more symbols failed to load.\n";
         return false;
     }
+    return true;
 
 }
 Resampler::Resampler(){

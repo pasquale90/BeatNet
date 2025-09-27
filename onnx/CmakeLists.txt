@@ -10,8 +10,8 @@ set(BEATNET_CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 # list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
-option(ENABLE_KISSFFT "Use the Kiss FFT library instead of FFTW3" ON)
-option(ENABLE_FFTW3 "Use the FFTW3 library instead of Kiss FFT" OFF)
+option(ENABLE_KISSFFT "Use the Kiss FFT library instead of FFTW3" OFF)
+option(ENABLE_FFTW3 "Use the FFTW3 library instead of Kiss FFT" ON)
 option(BUILD_APP "Build the test application using main.cpp" OFF)
 
 if(ENABLE_KISSFFT AND ENABLE_FFTW3)
@@ -39,26 +39,26 @@ set(BEATNET_INCLUDE_DIRS
     ${LIBSAMPLERATE_DIR}/include
 )
 
-if(WIN32)
-    set(BEATNET_SUBLIBS
-        ${ORT_DIR}/lib/onnxruntime.lib
-        ${LIBSAMPLERATE_DIR}/lib/samplerate.lib
-    )
-else()
-    set(BEATNET_SUBLIBS
-        ${ORT_DIR}/lib/libonnxruntime.dylib
-        ${LIBSAMPLERATE_DIR}/lib/libsamplerate.a
-    )
-endif()
+# if(WIN32)
+#     set(BEATNET_SUBLIBS
+#         ${ORT_DIR}/lib/onnxruntime.lib
+#         ${LIBSAMPLERATE_DIR}/lib/samplerate.lib
+#     )
+# else()
+#     set(BEATNET_SUBLIBS
+#         ${ORT_DIR}/lib/libonnxruntime.dylib
+#         ${LIBSAMPLERATE_DIR}/lib/libsamplerate.a
+#     )
+# endif()
 
 if(ENABLE_FFTW3)
 
     if(WIN32)
         list(APPEND BEATNET_INCLUDE_DIRS ${FFTW3_DIR})
-        list(APPEND BEATNET_SUBLIBS "${FFTW3_DIR}/libfftw3f-3.lib")
+        # list(APPEND BEATNET_SUBLIBS "${FFTW3_DIR}/libfftw3f-3.lib")
     else()
         list(APPEND BEATNET_INCLUDE_DIRS ${FFTW3_DIR}/include)
-        list(APPEND BEATNET_SUBLIBS ${FFTW3_DIR}/lib/libfftw3f.a)
+        # list(APPEND BEATNET_SUBLIBS ${FFTW3_DIR}/lib/libfftw3f.a)
     endif()
 elseif(ENABLE_KISSFFT)
     add_library(libkissfft STATIC
@@ -66,7 +66,7 @@ elseif(ENABLE_KISSFFT)
         ${KISSFFT_DIR}/kiss_fftr.c
     )
     list(APPEND BEATNET_INCLUDE_DIRS ${KISSFFT_DIR})
-    list(APPEND BEATNET_SUBLIBS libkissfft)
+    # list(APPEND BEATNET_SUBLIBS libkissfft)
 endif()
 
 message("BEATNET_INCLUDE_DIRS ${BEATNET_INCLUDE_DIRS}")
@@ -96,11 +96,12 @@ if (WIN32)
 endif()
 
 target_include_directories(${LIBRARY_NAME} PUBLIC ${BEATNET_INCLUDE_DIRS})
-target_link_libraries(${LIBRARY_NAME} PUBLIC ${BEATNET_SUBLIBS})
+# target_link_libraries(${LIBRARY_NAME} PUBLIC ${BEATNET_SUBLIBS})
 
 if(ENABLE_FFTW3)
     target_compile_definitions(${LIBRARY_NAME} PUBLIC ENABLE_FFTW3)
 elseif(ENABLE_KISSFFT)
+    target_link_libraries(${LIBRARY_NAME} PUBLIC libkissfft)
     target_compile_definitions(${LIBRARY_NAME} PUBLIC ENABLE_KISSFFT)
 endif()
 
@@ -109,26 +110,53 @@ if(BUILD_APP)
     target_link_libraries(${APP_NAME} PRIVATE ${LIBRARY_NAME})
 endif()
 
-if (BUILD_APP AND WIN32)
+function(copy_beatnet_deps target_name)
 
-    set(DLLS
-        "${ORT_DIR}/lib/onnxruntime.dll"
-        "${LIBSAMPLERATE_DIR}/bin/samplerate.dll"
-    )
-    if(ENABLE_FFTW3)
-        list(APPEND DLLS "${FFTW3_DIR}/libfftw3f-3.dll")
+    set(LIBS_AND_WEIGHTS "")
+
+    if(WIN32)
+        list(APPEND LIBS_AND_WEIGHTS 
+            "${ORT_DIR}/lib/onnnxruntime.dll"
+            "${LIBSAMPLERATE_DIR}/bin/samplerate.dll"
+        )
+        if(ENABLE_FFTW3)
+            list (APPEND LIBS_AND_WEIGHTS
+                "${FFTW3_DIR}/libfftw3f-3.dll")
+        endif()
+
+    elseif(APPLE)
+        file(GLOB SAMPLERATE_LIBS "${LIBSAMPLERATE_DIR}/lib/libsamplerate*.dylib*")
+        list(APPEND LIBS_AND_WEIGHTS ${SAMPLERATE_LIBS})
+        
+        file(GLOB ORT_LIBS "${ORT_DIR}/lib/libonnxruntime*.dylib*")
+        list(APPEND LIBS_AND_WEIGHTS ${ORT_LIBS})
+    
+        if(ENABLE_FFTW3)
+            file(GLOB FFTW3_LIBS "${FFTW3_DIR}/lib/libfftw3f*.dylib*")
+            list(APPEND LIBS_AND_WEIGHTS ${FFTW3_LIBS})
+        endif()
+    elseif(UNIX)
+        file(GLOB SAMPLERATE_LIBS "${LIBSAMPLERATE_DIR}/lib64/libsamplerate.so*")
+        list(APPEND LIBS_AND_WEIGHTS ${SAMPLERATE_LIBS})
+        
+        file(GLOB ORT_LIBS "${ORT_DIR}/lib/libonnxruntime.so*")
+        list(APPEND LIBS_AND_WEIGHTS ${ORT_LIBS})
+    
+        if(ENABLE_FFTW3)
+            file(GLOB FFTW3_LIBS "${FTW3_DIR}/lib/libfftw3f.so*")
+            list(APPEND LIBS_AND_WEIGHTS ${FFTW3_LIBS})
+        endif()
     endif()
 
-    add_custom_command(TARGET ${APP_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-            ${DLLS}
-            $<TARGET_FILE_DIR:${APP_NAME}>
-    )
-endif()
+    list (APPEND LIBS_AND_WEIGHTS "${BEATNET_ONNX_ROOTDIR}/beatnet_bda.onnx")
 
-# copy model weights into the dir where the 
-add_custom_command(TARGET ${LIBRARY_NAME} POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${BEATNET_ONNX_ROOTDIR}/beatnet_bda.onnx"
-        $<TARGET_FILE_DIR:${LIBRARY_NAME}>
-)
+    foreach(DEP_FILE IN LISTS LIBS_AND_WEIGHTS)
+        add_custom_command(TARGET ${LIBRARY_NAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${DEP_FILE}"
+                $<TARGET_FILE_DIR:${LIBRARY_NAME}>)
+    endforeach()
+
+endfunction(copy_beatnet_deps target_name)
+
+copy_beatnet_deps(${PROJECT_NAME})
