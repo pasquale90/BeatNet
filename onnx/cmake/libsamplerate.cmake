@@ -24,34 +24,15 @@ if (WIN32)
         FetchContent_MakeAvailable(libsamplerate_binary)
     endif()
     add_custom_target(libsamplerate_ready COMMENT "libsamplerate has been fetched")
+else()
 
-elseif(APPLE)
-    if (NOT EXISTS "${LIBSAMPLERATE_DIR}/lib64/libsamplerate.so")
-
-        # Linux / macOS: build from source
-        set(LIBSAMPLERATE_URL "https://github.com/libsndfile/libsamplerate/releases/download/${LIBSAMPLERATE_VERSION}/libsamplerate-${LIBSAMPLERATE_VERSION}.tar.xz")
-        
-        FetchContent_Declare(
-            libsamplerate_src
-            URL ${LIBSAMPLERATE_URL}
-            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-        )
-
-        FetchContent_GetProperties(libsamplerate_src)
-        FetchContent_MakeAvailable(libsamplerate_src)
-
-        add_custom_target(libsamplerate_binary ALL
-            COMMAND ./configure --prefix=${LIBSAMPLERATE_INSTALL_DIR} --disable-static
-            COMMAND make -j
-            COMMAND make install
-            WORKING_DIRECTORY ${libsamplerate_src_SOURCE_DIR}
-            COMMENT "Building and installing libsamplerate"
-        )
+    if (APPLE)
+        set(LIB_EXT "dylib")
+    elseif(UNIX)
+        set(LIB_EXT "so")
     endif()
-    add_custom_target(libsamplerate_ready COMMENT "libsamplerate has been fetched")
-elseif(UNIX)
 
-    if (NOT EXISTS "${LIBSAMPLERATE_DIR}/lib64/libsamplerate.so")
+    if (NOT EXISTS "${LIBSAMPLERATE_DIR}/lib64/libsamplerate.${LIB_EXT}")
         
         set(LIBSAMPLERATE_URL "https://github.com/libsndfile/libsamplerate/releases/download/${LIBSAMPLERATE_VERSION}/libsamplerate-${LIBSAMPLERATE_VERSION}.tar.xz")
         

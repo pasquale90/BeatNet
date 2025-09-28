@@ -39,30 +39,15 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
         )
     endif()
     add_custom_target(fftw3_ready ALL DEPENDS ${FFTW3_LIB_FILE})
-elseif(APPLE)
-    if (NOT EXISTS "${FFTW3_INSTALL_DIR}/lib64/libfftw3f.dylib")
-        set(FFTW3_URL "https://www.fftw.org/fftw-${FFTW3_VERSION}.tar.gz")
+else()
 
-        FetchContent_Declare(
-            fftw3
-            URL ${FFTW3_URL}
-            DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-        )
-
-        FetchContent_MakeAvailable(fftw3)
-
-        add_custom_target(fftw3_ready ALL
-            COMMAND ./configure --enable-float --disable-static --enable-shared --prefix=${FFTW3_INSTALL_DIR}
-            COMMAND make
-            COMMAND make install
-            WORKING_DIRECTORY ${fftw3_SOURCE_DIR}
-            COMMENT "Building and installing FFTW3"
-        )
+    if (APPLE)
+        set(LIB_EXT "dylib")
+    elseif(UNIX)
+        set(LIB_EXT "so")
     endif()
-    add_custom_target(fftw3_ready ALL DEPENDS ${FFTW3_LIB_FILE})
-elseif(UNIX)
 
-    if (NOT EXISTS "${FFTW3_INSTALL_DIR}/lib/libfftw3f.so")
+    if (NOT EXISTS "${FFTW3_INSTALL_DIR}/lib/libfftw3f.${LIB_EXT}")
         
         set(FFTW3_URL "https://www.fftw.org/fftw-${FFTW3_VERSION}.tar.gz")
 
