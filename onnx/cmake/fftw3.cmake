@@ -37,7 +37,8 @@ if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
 
     add_custom_target(fftw3_ready ALL DEPENDS ${FFTW3_LIB_FILE})
     
-else() # linux/macos
+elseif(APPLE)
+
     set(FFTW3_URL "https://www.fftw.org/fftw-${FFTW3_VERSION}.tar.gz")
 
     FetchContent_Declare(
@@ -55,6 +56,32 @@ else() # linux/macos
         COMMENT "Building and installing FFTW3"
     )
 
+elseif(UNIX)
+
+    if (NOT EXISTS "${FFTW3_INSTALL_DIR}/lib/libfftw3f.so")
+        
+        set(FFTW3_URL "https://www.fftw.org/fftw-${FFTW3_VERSION}.tar.gz")
+
+        FetchContent_Declare(
+            fftw3
+            URL ${FFTW3_URL}
+        )
+        FetchContent_Populate(fftw3)
+        
+        execute_process(
+            COMMAND ./configure --enable-float --disable-static --enable-shared --prefix=${FFTW3_INSTALL_DIR}
+            WORKING_DIRECTORY ${fftw3_SOURCE_DIR}
+        )
+        execute_process(
+            COMMAND make -j4
+            WORKING_DIRECTORY ${fftw3_SOURCE_DIR}
+        )
+        execute_process(
+            COMMAND make install
+            WORKING_DIRECTORY ${fftw3_SOURCE_DIR}
+        )
+    endif()
+    add_custom_target(fftw3_ready)
 endif()
 
 set(FFTW3_DIR ${FFTW3_INSTALL_DIR} CACHE PATH "Path to FFTW3")

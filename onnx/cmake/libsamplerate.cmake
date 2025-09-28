@@ -22,7 +22,7 @@ if (WIN32)
 
     add_custom_target(libsamplerate_ready COMMENT "libsamplerate has been fetched")
 
-else()
+elseif(APPLE)
     
     if(NOT TARGET samplerate)
 
@@ -44,9 +44,34 @@ else()
             WORKING_DIRECTORY ${libsamplerate_src_SOURCE_DIR}
             COMMENT "Building and installing libsamplerate"
         )
-        add_custom_target(libsamplerate_ready COMMENT "libsamplerate has been fetched")
     endif()
-    
+    add_custom_target(libsamplerate_ready COMMENT "libsamplerate has been fetched")
+elseif(UNIX)
+
+    if (NOT EXISTS "${LIBSAMPLERATE_DIR}/lib64/libsamplerate.so")
+        
+        set(LIBSAMPLERATE_URL "https://github.com/libsndfile/libsamplerate/releases/download/${LIBSAMPLERATE_VERSION}/libsamplerate-${LIBSAMPLERATE_VERSION}.tar.xz")
+        
+        FetchContent_Declare(
+            libsamplerate_src
+            URL ${LIBSAMPLERATE_URL}
+        )
+        FetchContent_Populate(libsamplerate_src)
+        
+        execute_process(
+            COMMAND ./configure --prefix=${LIBSAMPLERATE_INSTALL_DIR} --disable-static --enable-shared 
+            WORKING_DIRECTORY ${libsamplerate_src_SOURCE_DIR}
+        )
+        execute_process(
+            COMMAND make -j
+            WORKING_DIRECTORY ${libsamplerate_src_SOURCE_DIR}
+        )
+        execute_process(
+            COMMAND make install
+            WORKING_DIRECTORY ${libsamplerate_src_SOURCE_DIR}
+        )
+    endif()
+    add_custom_target(libsamplerate_ready COMMENT "libsamplerate has been fetched")
 endif()
 
 set(LIBSAMPLERATE_DIR ${LIBSAMPLERATE_INSTALL_DIR} CACHE PATH "Path to libsamplerate")

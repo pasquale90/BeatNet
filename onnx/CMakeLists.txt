@@ -136,14 +136,18 @@ function(copy_beatnet_deps target_name)
             list(APPEND LIBS_AND_WEIGHTS ${FFTW3_LIBS})
         endif()
     elseif(UNIX)
-        file(GLOB SAMPLERATE_LIBS "${LIBSAMPLERATE_DIR}/lib64/libsamplerate.so*")
+        file(GLOB SAMPLERATE_LIBS 
+            "${LIBSAMPLERATE_DIR}/lib/libsamplerate.so*"
+            "${LIBSAMPLERATE_DIR}/lib64/libsamplerate.so*")
         list(APPEND LIBS_AND_WEIGHTS ${SAMPLERATE_LIBS})
         
         file(GLOB ORT_LIBS "${ORT_DIR}/lib/libonnxruntime.so*")
         list(APPEND LIBS_AND_WEIGHTS ${ORT_LIBS})
     
         if(ENABLE_FFTW3)
-            file(GLOB FFTW3_LIBS "${FTW3_DIR}/lib/libfftw3f.so*")
+            file(GLOB FFTW3_LIBS 
+                "${FFTW3_DIR}/lib/libfftw3f.so*"
+                "${FFTW3_DIR}/lib64/libfftw3f.so*")
             list(APPEND LIBS_AND_WEIGHTS ${FFTW3_LIBS})
         endif()
     endif()
