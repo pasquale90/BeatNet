@@ -97,7 +97,7 @@ function(copy_beatnet_deps target_name)
 
     if(WIN32)
         list(APPEND LIBS_AND_WEIGHTS 
-            "${ORT_DIR}/lib/onnnxruntime.dll"
+            "${ORT_DIR}/lib/onnxruntime.dll"
             "${LIBSAMPLERATE_DIR}/bin/samplerate.dll"
         )
         if(ENABLE_FFTW3)
