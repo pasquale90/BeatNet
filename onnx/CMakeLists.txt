@@ -7,7 +7,6 @@ set(CMAKE_CXX_STANDARD 17)
 
 set (BEATNET_ONNX_ROOTDIR ${CMAKE_CURRENT_SOURCE_DIR} CACHE PATH "Path to BeatNet/onnx directory")
 set(BEATNET_CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-# list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(LIBRARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/libs)
 
 option(ENABLE_KISSFFT "Use the Kiss FFT library instead of FFTW3" OFF)
@@ -39,26 +38,12 @@ set(BEATNET_INCLUDE_DIRS
     ${LIBSAMPLERATE_DIR}/include
 )
 
-# if(WIN32)
-#     set(BEATNET_SUBLIBS
-#         ${ORT_DIR}/lib/onnxruntime.lib
-#         ${LIBSAMPLERATE_DIR}/lib/samplerate.lib
-#     )
-# else()
-#     set(BEATNET_SUBLIBS
-#         ${ORT_DIR}/lib/libonnxruntime.dylib
-#         ${LIBSAMPLERATE_DIR}/lib/libsamplerate.a
-#     )
-# endif()
-
 if(ENABLE_FFTW3)
 
     if(WIN32)
         list(APPEND BEATNET_INCLUDE_DIRS ${FFTW3_DIR})
-        # list(APPEND BEATNET_SUBLIBS "${FFTW3_DIR}/libfftw3f-3.lib")
     else()
         list(APPEND BEATNET_INCLUDE_DIRS ${FFTW3_DIR}/include)
-        # list(APPEND BEATNET_SUBLIBS ${FFTW3_DIR}/lib/libfftw3f.a)
     endif()
 elseif(ENABLE_KISSFFT)
     add_library(libkissfft STATIC
@@ -66,10 +51,7 @@ elseif(ENABLE_KISSFFT)
         ${KISSFFT_DIR}/kiss_fftr.c
     )
     list(APPEND BEATNET_INCLUDE_DIRS ${KISSFFT_DIR})
-    # list(APPEND BEATNET_SUBLIBS libkissfft)
 endif()
-
-message("BEATNET_INCLUDE_DIRS ${BEATNET_INCLUDE_DIRS}")
 
 set(LIB_SOURCE_FILES  
     BeatNet.cpp 
@@ -96,7 +78,6 @@ if (WIN32)
 endif()
 
 target_include_directories(${LIBRARY_NAME} PUBLIC ${BEATNET_INCLUDE_DIRS})
-# target_link_libraries(${LIBRARY_NAME} PUBLIC ${BEATNET_SUBLIBS})
 
 if(ENABLE_FFTW3)
     target_compile_definitions(${LIBRARY_NAME} PUBLIC ENABLE_FFTW3)

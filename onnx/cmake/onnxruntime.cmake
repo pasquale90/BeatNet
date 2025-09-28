@@ -3,10 +3,13 @@ include(FetchContent)
 # Determine the current platform (OS and architecture)
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set(OS_TAG "win")
+    set(DYNAMIC_LIB_SAMPLE_FILE onnxruntime.dll)
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Linux")
     set(OS_TAG "linux")
+    set(DYNAMIC_LIB_SAMPLE_FILE libonnxruntime.dylib)
 elseif (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
     set(OS_TAG "osx")
+    set(DYNAMIC_LIB_SAMPLE_FILE libonnxruntime.so)
 else()
     message(FATAL_ERROR "Unsupported OS: ${CMAKE_SYSTEM_NAME}")
 endif()
@@ -38,12 +41,13 @@ endif()
 set(ONNX_URL "https://github.com/microsoft/onnxruntime/releases/download/v${ONNX_VERSION}/${ONNX_RELEASE_NAME}")
 set(ONNX_RUNTIME_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs/onnxruntime")
 
-if (NOT EXISTS "${ONNX_RUNTIME_DIR}/lib/onnxruntime.lib")
+if (NOT EXISTS "${ONNX_RUNTIME_DIR}/lib/${DYNAMIC_LIB_SAMPLE_FILE}")
     message(STATUS "Downloading ONNX Runtime from ${ONNX_URL}")
     FetchContent_Declare(
         onnxruntime_binary
         URL ${ONNX_URL}
         SOURCE_DIR ${ONNX_RUNTIME_DIR}
+        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
     )
     FetchContent_MakeAvailable(onnxruntime_binary)
 

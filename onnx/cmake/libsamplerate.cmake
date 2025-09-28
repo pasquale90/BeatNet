@@ -5,26 +5,28 @@ set(LIBSAMPLERATE_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs/libsamplerate")
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
 if (WIN32)
-    if (CMAKE_SIZEOF_VOID_P EQUAL 8)
-        set(LIBSAMPLERATE_URL "https://github.com/libsndfile/libsamplerate/releases/download/${LIBSAMPLERATE_VERSION}/libsamplerate-${LIBSAMPLERATE_VERSION}-win64.zip")
-    else()
-        set(LIBSAMPLERATE_URL "https://github.com/libsndfile/libsamplerate/releases/download/${LIBSAMPLERATE_VERSION}/libsamplerate-${LIBSAMPLERATE_VERSION}-win32.zip")
+    if (NOT EXISTS "${LIBSAMPLERATE_DIR}/lib/libsamplerate.dll")
+
+        if (CMAKE_SIZEOF_VOID_P EQUAL 8)
+            set(LIBSAMPLERATE_URL "https://github.com/libsndfile/libsamplerate/releases/download/${LIBSAMPLERATE_VERSION}/libsamplerate-${LIBSAMPLERATE_VERSION}-win64.zip")
+        else()
+            set(LIBSAMPLERATE_URL "https://github.com/libsndfile/libsamplerate/releases/download/${LIBSAMPLERATE_VERSION}/libsamplerate-${LIBSAMPLERATE_VERSION}-win32.zip")
+        endif()
+
+        FetchContent_Declare(
+            libsamplerate_binary
+            URL ${LIBSAMPLERATE_URL}
+            SOURCE_DIR ${LIBSAMPLERATE_INSTALL_DIR}
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        )
+
+        FetchContent_GetProperties(libsamplerate_binary)
+        FetchContent_MakeAvailable(libsamplerate_binary)
     endif()
-
-    FetchContent_Declare(
-        libsamplerate_binary
-        URL ${LIBSAMPLERATE_URL}
-        SOURCE_DIR ${LIBSAMPLERATE_INSTALL_DIR}
-    )
-
-    FetchContent_GetProperties(libsamplerate_binary)
-    FetchContent_MakeAvailable(libsamplerate_binary)
-
     add_custom_target(libsamplerate_ready COMMENT "libsamplerate has been fetched")
 
 elseif(APPLE)
-    
-    if(NOT TARGET samplerate)
+    if (NOT EXISTS "${LIBSAMPLERATE_DIR}/lib64/libsamplerate.so")
 
         # Linux / macOS: build from source
         set(LIBSAMPLERATE_URL "https://github.com/libsndfile/libsamplerate/releases/download/${LIBSAMPLERATE_VERSION}/libsamplerate-${LIBSAMPLERATE_VERSION}.tar.xz")
@@ -32,6 +34,7 @@ elseif(APPLE)
         FetchContent_Declare(
             libsamplerate_src
             URL ${LIBSAMPLERATE_URL}
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
         )
 
         FetchContent_GetProperties(libsamplerate_src)
@@ -55,8 +58,9 @@ elseif(UNIX)
         FetchContent_Declare(
             libsamplerate_src
             URL ${LIBSAMPLERATE_URL}
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
         )
-        FetchContent_Populate(libsamplerate_src)
+        FetchContent_MakeAvailable(libsamplerate_src)
         
         execute_process(
             COMMAND ./configure --prefix=${LIBSAMPLERATE_INSTALL_DIR} --disable-static --enable-shared 
