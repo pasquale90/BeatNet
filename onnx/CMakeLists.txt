@@ -35,7 +35,7 @@ endif()
 set(BEATNET_INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${ORT_DIR}/include
-    ${LIBSAMPLERATE_DIR}/include
+    ${SAMPLERATE_DIR}/include
 )
 
 if(ENABLE_FFTW3)
@@ -98,7 +98,7 @@ function(copy_beatnet_deps target_name)
     if(WIN32)
         list(APPEND LIBS_AND_WEIGHTS 
             "${ORT_DIR}/lib/onnxruntime.dll"
-            "${LIBSAMPLERATE_DIR}/bin/samplerate.dll"
+            "${SAMPLERATE_DIR}/bin/samplerate.dll"
         )
         if(ENABLE_FFTW3)
             list (APPEND LIBS_AND_WEIGHTS
@@ -106,7 +106,7 @@ function(copy_beatnet_deps target_name)
         endif()
 
     elseif(APPLE)
-        file(GLOB SAMPLERATE_LIBS "${LIBSAMPLERATE_DIR}/lib/libsamplerate*.dylib*")
+        file(GLOB SAMPLERATE_LIBS "${SAMPLERATE_DIR}/lib/libsamplerate*.dylib*")
         list(APPEND LIBS_AND_WEIGHTS ${SAMPLERATE_LIBS})
         
         file(GLOB ORT_LIBS "${ORT_DIR}/lib/libonnxruntime*.dylib*")
@@ -118,8 +118,8 @@ function(copy_beatnet_deps target_name)
         endif()
     elseif(UNIX)
         file(GLOB SAMPLERATE_LIBS 
-            "${LIBSAMPLERATE_DIR}/lib/libsamplerate.so*"
-            "${LIBSAMPLERATE_DIR}/lib64/libsamplerate.so*")
+            "${SAMPLERATE_DIR}/lib/libsamplerate.so*"
+            "${SAMPLERATE_DIR}/lib64/libsamplerate.so*")
         list(APPEND LIBS_AND_WEIGHTS ${SAMPLERATE_LIBS})
         
         file(GLOB ORT_LIBS "${ORT_DIR}/lib/libonnxruntime.so*")

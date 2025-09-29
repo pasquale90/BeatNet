@@ -5,7 +5,7 @@ set(LIBSAMPLERATE_INSTALL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libs/libsamplerate")
 set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
 if (WIN32)
-    if (NOT EXISTS "${LIBSAMPLERATE_DIR}/lib/libsamplerate.dll")
+    if (NOT EXISTS "${SAMPLERATE_DIR}/lib/libsamplerate.dll")
 
         if (CMAKE_SIZEOF_VOID_P EQUAL 8)
             set(LIBSAMPLERATE_URL "https://github.com/libsndfile/libsamplerate/releases/download/${LIBSAMPLERATE_VERSION}/libsamplerate-${LIBSAMPLERATE_VERSION}-win64.zip")
@@ -32,7 +32,7 @@ else()
         set(LIB_EXT "so")
     endif()
 
-    if (NOT EXISTS "${LIBSAMPLERATE_DIR}/lib64/libsamplerate.${LIB_EXT}")
+    if (NOT EXISTS "${SAMPLERATE_DIR}/lib64/libsamplerate.${LIB_EXT}")
         
         set(LIBSAMPLERATE_URL "https://github.com/libsndfile/libsamplerate/releases/download/${LIBSAMPLERATE_VERSION}/libsamplerate-${LIBSAMPLERATE_VERSION}.tar.xz")
         
@@ -59,4 +59,4 @@ else()
     add_custom_target(libsamplerate_ready COMMENT "libsamplerate has been fetched")
 endif()
 
-set(LIBSAMPLERATE_DIR ${LIBSAMPLERATE_INSTALL_DIR} CACHE PATH "Path to libsamplerate")
+set(SAMPLERATE_DIR ${LIBSAMPLERATE_INSTALL_DIR} CACHE PATH "Path to libsamplerate")
