@@ -32,7 +32,11 @@ else()
         set(LIB_EXT "so")
     endif()
 
-    if (NOT EXISTS "${SAMPLERATE_DIR}/lib64/libsamplerate.${LIB_EXT}")
+    file(GLOB SAMPLERATE_DLIB
+        "${SAMPLERATE_DIR}/lib/libsamplerate.${LIB_EXT}"
+        "${SAMPLERATE_DIR}/lib64/libsamplerate.${LIB_EXT}")
+
+    if (NOT EXISTS "${SAMPLERATE_DLIB}")
         
         set(LIBSAMPLERATE_URL "https://github.com/libsndfile/libsamplerate/releases/download/${LIBSAMPLERATE_VERSION}/libsamplerate-${LIBSAMPLERATE_VERSION}.tar.xz")
         

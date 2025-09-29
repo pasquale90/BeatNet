@@ -47,7 +47,11 @@ else()
         set(LIB_EXT "so")
     endif()
 
-    if (NOT EXISTS "${FFTW3_INSTALL_DIR}/lib/libfftw3f.${LIB_EXT}")
+    file(GLOB FFTW3_DLIB 
+        "${FFTW3_DIR}/lib/${LIB_PREFIX}fftw3f${LIB_EXT}"
+        "${FFTW3_DIR}/lib64/${LIB_PREFIX}fftw3f${LIB_EXT}")
+
+    if (NOT EXISTS "${FFTW3_DLIB}")
         
         set(FFTW3_URL "https://www.fftw.org/fftw-${FFTW3_VERSION}.tar.gz")
 
