@@ -191,7 +191,7 @@ void BeatNet::inference(std::vector<float>& output) {
         output[i] = output_data[i];
     }
 
-    printOutputShape(output_tensor);
+    // printOutputShape(output_tensor);
 
     ReleaseValue(input_tensor);
     ReleaseValue(output_tensor);
