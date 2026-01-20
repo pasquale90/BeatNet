@@ -1,6 +1,7 @@
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..", "..", "src")))
+sys.path.append(os.path.abspath(os.path.join(os.getcwd(), "..", "..", "src", "BeatNet")))
 print(sys.path)
 import numpy as np
 from BeatNet.BeatNet import BeatNet
@@ -20,30 +21,46 @@ class BufferStream:
     '''
     def __init__(self, audiopath):
         self.audio, _ = librosa.load(audiopath, sr=samplerate, mono=True, dtype=np.float32)
-        self.is_active = True
-        # use a position variable
-        # use a output file variable to store results
+        self.active = True
+        self.pos = 0
+        self.numSamples = len(self.audio) 
 
+    def getNumSamples(self):
+        return self.numSamples
+    
     def read(self, size):
-        pass
         # if last buffer
-            # set self.is_active to false 
-            # store results
+        if (self.numSamples < (self.pos+1)*buffersize):
+            self.active = False            
+
         # read buffer
-        # zero pad if needed
-        # ++position
+        buffer = self.audio[self.pos*buffersize : (self.pos+1)*buffersize]
+        self.pos += 1
+        return buffer.tobytes()
 
     def is_active(self):
         return self.active
 
 filelist = os.listdir(wavDir)
 for audiosample in filelist:
+    import pdb; pdb.set_trace()
+
     audiopath = os.path.join(wavDir, audiosample)
     
     print(f"Processing {audiopath}...")
 
     # init beatnet model
     estimator = BeatNet(1, mode='stream', inference_model='PF', thread=False)
-    estimator.stream = BufferStream(audiopath)
+    customBufferStream = BufferStream(audiopath)
+    estimator.stream = customBufferStream
 
     output = estimator.process()  # read buffers internally until is_active() is false
+
+    # store results
+    outputFile = os.path.join(os.getcwd(), "results" ,os.path.basename(audiopath).split(".wav")[0] + "_py")
+    with open(outputFile, "w") as f:
+        for beat in output:
+            # import pdb; pdb.set_trace()
+            f.write(f"{beat[0],beat[1]}\n")
+
+    print(f"Finished processing {audiopath} ({customBufferStream.getNumSamples()} samples)")
