@@ -10,6 +10,8 @@ import librosa
 samplerate = 22050 
 buffersize = 512
 
+wavDir = "samples"
+
 # class that replaces the microphone input to feed buffers of audio data instead    
 class BufferStream:
     '''
@@ -17,7 +19,7 @@ class BufferStream:
     @see BeatNet.py->line 87
     '''
     def __init__(self, audiopath):
-        self.audio, _ = librosa.load(audiopath, sr=samplerate, mono=True)
+        self.audio, _ = librosa.load(audiopath, sr=samplerate, mono=True, dtype=np.float32)
         self.is_active = True
         # use a position variable
         # use a output file variable to store results
@@ -34,9 +36,9 @@ class BufferStream:
     def is_active(self):
         return self.active
 
-filelist = os.listdir("samples")
+filelist = os.listdir(wavDir)
 for audiosample in filelist:
-    audiopath = os.path.join("samples", audiosample)
+    audiopath = os.path.join(wavDir, audiosample)
     
     print(f"Processing {audiopath}...")
 
