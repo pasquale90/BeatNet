@@ -175,6 +175,7 @@ bool BeatNet::preprocess(const std::vector<float>& raw_input, std::vector<float>
                     [](float x) {return x < 0.0f; }, 
                     0.0f);
     
+    // stack log spectrum and spectral difference
     hstack(log_fb, diff, preprocessed_input);
     return true;
 }
