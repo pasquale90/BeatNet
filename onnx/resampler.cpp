@@ -106,5 +106,21 @@ std::vector<float> Resampler::resample(const std::vector<float>& input) {
         std::cerr << "libsamplerate error: " << strerror(error) << std::endl;
     }
     long frames_written = callback_read(state_, ratio, output_frame_count, output_buffer.data());
+
+    //int n = output_buffer.size();
+    //std::vector<float> out_new(n, 0.0f);
+    //int i_new = 0;
+    //for (int index = 0; index < n; ++index)
+    //{
+    //    if (!(index & 1))
+    //        out_new[i_new++] = output_buffer[index];
+    //}
+
+    //int pos = 0;
+    //auto it = std::remove_if(output_buffer.begin(), 
+    //                         output_buffer.end(), 
+    //                         [&pos](int) { return (pos++ & 1);});
+    
+    //output_buffer = out_new;
     return output_buffer;
 }
