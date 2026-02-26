@@ -73,7 +73,10 @@ BeatNet::BeatNet(
     //signal_processor(FRAME_LENGTH, HOP_SIZE),
     //fft_processor(FRAME_LENGTH, FFT_SIZE, FRAME_SIZE_POW2),
     fft_processor(FRAME_LENGTH, FFT_SIZE, FRAME_LENGTH),
-    SR(0),bufferSize(0)
+    //filterbank_processor(BANKS_PER_OCTAVE, FFT_SIZE, SR_BEATNET, 30.0f, 11025.0f, true, true),
+    filterbank_processor(24, FFT_SIZE, SR_BEATNET, 30.0f, 17000.0f, true, true),
+    SR(0),
+    bufferSize(0)
 {
 
     if (!loadONNXRuntime("onnxruntime")) {
