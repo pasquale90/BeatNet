@@ -29,7 +29,7 @@ private:
     bool unique_filters;
     std::vector<std::vector<float>> filters;
 
-    float hzToBin(float f) const;
+    std::vector<int> centersHzToBins(const std::vector<float>& centers) const;
 
 };
 
