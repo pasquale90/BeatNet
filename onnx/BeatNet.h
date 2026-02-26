@@ -5,7 +5,7 @@
 #include <string>
 #include "onnxruntime_c_api.h"
 #include "resampler.h"
-#include "frameprocessor.h"
+#include "framedSignal.h"
 #include "fftprocessor.h"
 #include "filterbankprocessor.h"
 #include "logspecutils.h"
@@ -125,7 +125,7 @@ private:
 
     // Preprocessing
     Resampler resampler;
-    FramedSignalProcessor signal_processor;
+
     FFTProcessor fft_processor;
     FilterBankProcessor filterbank_processor;
     std::vector<float> preprocessed_input;

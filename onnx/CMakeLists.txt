@@ -56,7 +56,7 @@ endif()
 set(LIB_SOURCE_FILES  
     BeatNet.cpp 
     resampler.cpp
-    frameprocessor.cpp
+    framedSignal.cpp
     fftprocessor.cpp
     filterbankprocessor.cpp
     logspecutils.cpp
