@@ -141,12 +141,32 @@ bool BeatNet::preprocess(const std::vector<float>& raw_input, std::vector<float>
     const int nFrames = 4;
     FramedSignal framedSignal{ resampledSignal , nFrames, FRAME_LENGTH, HOP_SIZE };
     
+    // spectral difference
     // last frame
     auto frame_3 = framedSignal[3];
-    spectrum = fft_processor.compute_fft(frame_3);
-    filters = filterbank_processor.apply(spectrum);
-    log_fb = log_compress(filters);
-    diff = spectral_diff(log_fb, prev_log_fb);
+    auto spectrum_3 = fft_processor.compute_fft(frame_3);
+    auto filters_3 = filterbank_processor.apply(spectrum_3);
+    auto log_compress_3 = log_compress(filters_3);
+    log_fb = std::move(log_compress_3);
+
+    // frame before
+    auto frame_2 = framedSignal[2]; 
+    auto spectrum_2 = fft_processor.compute_fft(frame_2);
+    auto filters_2 = filterbank_processor.apply(spectrum_2);
+    auto log_compress_2 = log_compress(filters_2);
+    prev_log_fb = std::move(log_compress_2);
+
+    // diff = log_fb3 - log_fb2
+    diff.assign(log_fb.size(), 0.0f);
+    std::transform(log_fb.begin(), log_fb.end(), prev_log_fb.begin(),
+                   diff.begin(),  std::minus());
+
+    // replace negative values with zero
+    std::replace_if(diff.begin(), diff.end(), 
+                    [](float x) {return x < 0.0f; }, 
+                    0.0f);
+    
+    // stack log spectrum and spectral difference
     hstack(log_fb, diff, preprocessed_input);
     return true;
 }

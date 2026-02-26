@@ -133,8 +133,9 @@ private:
     std::vector<float> spectrum;
     std::vector<float> filters;
     std::vector<float> log_fb;
-    std::vector<float> diff;
     std::vector<float> prev_log_fb;
+    std::vector<float> diff;
+    
 
     // helper functions - preprocess for feature extraction and inference for model utilization
     bool preprocess(const std::vector<float>& raw_input, std::vector<float>& preprocessed_input);
