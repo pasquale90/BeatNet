@@ -70,9 +70,9 @@ BeatNet::BeatNet(
     env(nullptr), session(nullptr), session_options(nullptr),
     memory_info(nullptr), allocator(nullptr), run_options(nullptr),
     input_name(nullptr), output_name(nullptr),
-    signal_processor(FRAME_LENGTH, HOP_SIZE),
-    fft_processor(FRAME_LENGTH, FFT_SIZE, FRAME_SIZE_POW2),
-    filterbank_processor(BANKS_PER_OCTAVE, FFT_SIZE, SR_BEATNET, 30.0f, 11025.0f, true, true),
+    //signal_processor(FRAME_LENGTH, HOP_SIZE),
+    //fft_processor(FRAME_LENGTH, FFT_SIZE, FRAME_SIZE_POW2),
+    fft_processor(FRAME_LENGTH, FFT_SIZE, FRAME_LENGTH),
     SR(0),bufferSize(0)
 {
 
@@ -136,15 +136,21 @@ void BeatNet::setup(double sampleRate, int samplesPerBlock) {
 
 bool BeatNet::preprocess(const std::vector<float>& raw_input, std::vector<float>& preprocessed_input) {
         
-    std::vector<float> resampled = resampler.resample(raw_input);
-    std::vector<float> frame;
-    bool valid_frame = signal_processor.process(resampled,frame);
-    if (!valid_frame) {
+    std::vector<float> resampledSignal = resampler.resample(raw_input); 
+
+    const int nFrames = 4;
+    FramedSignalProcessor framedSignal{ resampledSignal , nFrames, FRAME_LENGTH, HOP_SIZE };
+    
+
+    //bool valid_frame = signal_processor.process(resampled,frame);
+    //if (!valid_frame) {
         // std::cout<<"invalid frame and will be invalid for the first ~"<<FRAME_LENGTH/resampled.size()-1<<" frames"<<std::endl;
-        return false;
-    }
-        
-    spectrum = fft_processor.compute_fft(frame);
+    //    return false;
+    //}
+    
+    // last frame
+    auto frame_3 = framedSignal[3];
+    spectrum = fft_processor.compute_fft(frame_3);
     filters = filterbank_processor.apply(spectrum);
     log_fb = log_compress(filters);
     diff = spectral_diff(log_fb, prev_log_fb);
