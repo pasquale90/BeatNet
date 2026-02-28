@@ -70,8 +70,8 @@ BeatNet::BeatNet(
     env(nullptr), session(nullptr), session_options(nullptr),
     memory_info(nullptr), allocator(nullptr), run_options(nullptr),
     input_name(nullptr), output_name(nullptr),
-    fft_processor(FRAME_LENGTH, FFT_SIZE, FRAME_SIZE_POW2),
-    filterbank_processor(BANKS_PER_OCTAVE, FFT_SIZE, SR_BEATNET, 30.0f, 11025.0f, true, true),
+    fft_processor(FRAME_LENGTH, FFT_SIZE, FRAME_LENGTH),
+    filterbank_processor(BANKS_PER_OCTAVE, FFT_SIZE, SR_BEATNET, 30.0f, 17000.0f, true, true),
     SR(0),bufferSize(0)
 {
 

@@ -5,8 +5,8 @@
 #include "BeatNet.h"
 #include <utility>
 
-static int samplerate = 22050;
-static int buffersize = 512;
+static int samplerate = 44100;
+static int buffersize = 2293 * 2;
 typedef float bitQuantization; 
 static const std::string wavDir = "samples";
 
