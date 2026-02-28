@@ -50,17 +50,21 @@ for audiosample in filelist:
     print(f"Processing {audiopath}...")
 
     # init beatnet model
-    estimator = BeatNet(1, mode='stream', inference_model='PF', thread=False)
-    customBufferStream = BufferStream(audiopath)
-    estimator.stream = customBufferStream
-
-    output = estimator.process()  # read buffers internally until is_active() is false
+    # estimator = BeatNet(1, mode='stream', inference_model='PF', thread=False)
+    # customBufferStream = BufferStream(audiopath)
+    # estimator.stream = customBufferStream
+    estimator = BeatNet(1, mode='realtime', inference_model='PF', plot=['activations', 'downbeat_particles', 'beat_particles'], thread=False)
+    output = estimator.process(audiopath)  # read buffers internally until is_active() is falseaudiopath
+    # output = estimator.process()  # read buffers internally until is_active() is false
 
     # store results
     outputFile = os.path.join(os.getcwd(), "results" ,os.path.basename(audiopath).split(".wav")[0] + "_py")
+    print(output)
+    if len(output)>0:
+        print(len(output)/ (output[-1][0]- output[0][0])*60*2)
     with open(outputFile, "w") as f:
         for beat in output:
             # import pdb; pdb.set_trace()
             f.write(f"{beat[0],beat[1]}\n")
 
-    print(f"Finished processing {audiopath} ({customBufferStream.getNumSamples()} samples)")
+    # print(f"Finished processing {audiopath} ({customBufferStream.getNumSamples()} samples)")

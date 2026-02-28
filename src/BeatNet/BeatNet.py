@@ -19,6 +19,8 @@ import matplotlib.pyplot as plt
 import time
 import threading
 
+import onnxruntime
+
 
 class BeatNet:
 
@@ -174,6 +176,9 @@ class BeatNet:
                 pred = self.model.final_pred(pred)
                 pred = pred.cpu().detach().numpy()
                 self.pred = np.transpose(pred[:2, :])
+                
+    def return_dummy_array(self):
+        return np.zeros((2,10))
 
 
     def activation_extractor_realtime(self, audio_path):
@@ -189,10 +194,45 @@ class BeatNet:
                 if self.counter<2:
                     self.pred = np.zeros([1,2])
                 else:
-                    feats = self.proc.process_audio(self.audio[self.log_spec_hop_length * (self.counter-2):self.log_spec_hop_length * (self.counter) + self.log_spec_win_length]).T[-1]
+                    feats = self.return_dummy_array()
+                    feats1 = self.proc.return_dummy_array()
+                    i0 = self.log_spec_hop_length * (self.counter-2)
+                    i1 = self.log_spec_hop_length * (self.counter) + self.log_spec_win_length
+                    #print(i0,i1)
+                    block = self.audio[i0:i1]
+                    feats = self.proc.process_audio(block)
+                    # takes only one column over 4 (???)
+                    feats = feats.T[-1]
                     feats = torch.from_numpy(feats)
                     feats = feats.unsqueeze(0).unsqueeze(0).to(self.device)
-                    pred = self.model(feats)[0]
+                    
+                    #---- pytorch prediction -----------------
+                    pytorchprediction = self.model(feats)                    
+                    pred = pytorchprediction[0]
+                    # pred = self.model(feats)[0]
+                    
+                    
+                    # -----onnx prediction ---------------------
+                    inputTensors = (feats,)
+                    onnx_inputs = [tensor.numpy(force=True) for tensor in inputTensors]
+                    # print(f"Input length: {len(onnx_inputs)}")
+                    # print(f"Sample input: {onnx_inputs}")
+
+                    ort_session = onnxruntime.InferenceSession(
+                        "C:/Users/Benoit/Documents/Auto-Tempo-Detection/libs/BeatNet/onnx/beatnet_bda.onnx", 
+                        providers=["CPUExecutionProvider"]
+                    )
+
+                    input_data = zip(ort_session.get_inputs(), onnx_inputs)
+
+                    onnxruntime_input = {input_arg.name: input_value for input_arg, input_value in input_data}
+
+                    # ONNX Runtime returns a list of outputs
+                    onnxruntime_outputs = ort_session.run(None, onnxruntime_input)[0]
+                    # ----------------------------------------
+                    pred = torch.tensor(onnxruntime_outputs[0])
+                    
+                    
                     pred = self.model.final_pred(pred)
                     pred = pred.cpu().detach().numpy()
                     self.pred = np.transpose(pred[:2, :])

@@ -165,7 +165,8 @@ class particle_filter_cascade:
         pass
         self.T = 1 / self.fps
         self.counter = -1
-        self.path = np.zeros((1, 2), dtype=float)
+        #self.path = np.zeros((1, 2), dtype=float)
+        self.path = [[0,0]]
         
         #   particles initialization
         self.particles = np.sort(np.random.choice(np.arange(0, self.st.num_states - 1), self.particle_size, replace=True))
@@ -184,6 +185,7 @@ class particle_filter_cascade:
             self.subplot1.set_title("Activations plot", size=200)
             self.subplot1.plot(self.downbeats_activation_show , color='purple', label='Downbeat Activations', linewidth=15) # Make a new line for the downbeat activations
             self.activation_lines = self.subplot1.get_lines() # Obtain a list of lines on the plot
+            # plt.show(block=False)
             
         if 'beat_particles' in self.plot:
             f2, self.subplot2 = plt.subplots(figsize=(30, 10), dpi=50)
@@ -200,6 +202,7 @@ class particle_filter_cascade:
             self.subplot2.set_ylabel("ϕ'_b: Tempo", size=20)
             self.subplot2.set_title("Beat particle states", size=20)
             self.beat_particles_swarm = self.subplot2.axvline(x=position_beats) # setting up beat particle average to display
+            # plt.show(block=False)
             
         if 'downbeat_particles' in self.plot:    
             f3, self.subplot3 = plt.subplots(figsize=(30, 10), dpi=50)
@@ -219,7 +222,7 @@ class particle_filter_cascade:
             self.subplot3.set_title("Downbeat particle states", size=20)
             self.down_particles_swarm = self.subplot3.axvline(x=position_downs) # setting up downbeat particle average to display
         
-            #plt.show(block=False)
+            # plt.show(block=False)
 
     def process(self, activations):
 
@@ -242,11 +245,14 @@ class particle_filter_cascade:
         activations = activations[int(self.offset / self.T):]
         if np.shape(activations)==(2,):
             activations = np.reshape(activations, (-1, 2))
-        both_activations = activations.copy()
+
+        self.both_activations = activations.copy()
+        
+        # gate on activation
         activations = np.max(activations, axis=1)
         activations[activations < self.ig_threshold] = 0.03
         self.activations = activations
-        self.both_activations = both_activations
+
         
         if 'activations' in self.plot and (self.mode == 'online' or self.mode == 'offline'):
             self.activations_plot()
@@ -271,24 +277,39 @@ class particle_filter_cascade:
                 self.down_particles = state1
                 
                 # downbeat particles correction
-                if both_activations[i][1]>0.7:
+                if self.both_activations[i][1]>0.7:
                     self.down_particles = np.append(self.down_particles,np.array([self.st2.first_states]))
-                obs2 = down_densities(both_activations[i], self.om2, self.st2)
+                obs2 = down_densities(self.both_activations[i], self.om2, self.st2)
                 self.down_particles = universal_resample(self.down_particles, obs2[self.down_particles])  
-                if both_activations[i][1]>0.7:
+                if self.both_activations[i][1]>0.7:
                     self.down_particles = np.delete(self.down_particles, np.random.choice(self.down_particle_size, len(self.st2.first_states), replace=False))
                 m = np.bincount(self.down_particles)
                 self.down_max = np.argmax(m)  # calculating downbeat particles clutter
                 
                 # beat vs downbeat distinguishment
-                if self.down_max in self.st2.first_states[0] and self.path[-1][1] !=1 and both_activations[i][1]>0.4:
-                    self.path = np.append(self.path, [[self.offset + self.counter * self.T, 1]], axis=0)
+                if (self.down_max in self.st2.first_states[0] and len(self.path) > 0 and
+                   self.path[-1][1] !=1 and 
+                   self.both_activations[i][1]>0.4):
+                    
+                    
                     if self.mode == 'stream' or self.mode == 'realtime':
-                        print("*beat!")
+                        print("*beat!") 
+                        
+                    time_downbeat = self.offset + self.counter * self.T
+                    self.path.append([time_downbeat, 1])
+                    # newpath = np.append(self.path, [[time_downbeat, 1]], axis=0)
+                    # self.path = newpath
+
                 elif (activations[i]>0.4) :
-                    self.path = np.append(self.path, [[self.offset + self.counter * self.T, 2]], axis=0)
                     if self.mode == 'stream' or self.mode == 'realtime':
                         print("beat!")
+                        
+                    time_beat = self.offset + self.counter * self.T
+                    self.path.append([time_beat, 2])
+                    # newpath = np.append(self.path, [[time_beat, 2]], axis=0)
+                    # self.path = newpath
+                    
+
                     #librosa.clicks(times=None, frames=None, sr=22050, hop_length=512, click_freq=440.0, click_duration=0.1, click=None, length=None)
                 if 'downbeat_particles' in self.plot:
                     self.downbeat_particles_plot()
@@ -314,7 +335,12 @@ class particle_filter_cascade:
             if 'beat_particles' in self.plot:
                 if self.counter % 1 == 0:  # choosing how often to plot
                     self.beat_particles_plot()
-        return self.path[1:]
+                    
+        # if self.path[1:].shape[0] > 1:
+        #     print(60 / (self.path[1:][-1][0] - self.path[1:][-2][0]))
+        # print(self.path[1:])
+        # print(np.asarray(self.path[1:]))
+        return np.asarray(self.path[1:])
         
         
     def activations_plot(self):
@@ -356,7 +382,8 @@ class particle_filter_cascade:
             self.st.state_intervals) - self.st.state_intervals[part[:, 0]]])
         self.beat_particles_show[2].set_alpha(current_activation)
         self.beat_particles_show[2].set_color(beat_color_show)
-        self.beat_particles_swarm.set_xdata(x=position_beats)
+        #self.beat_particles_swarm.set_xdata(x=position_beats)
+        #plt.plot(self.both_activations)
         plt.pause(0.000000001)
     
     def downbeat_particles_plot(self):
@@ -371,7 +398,7 @@ class particle_filter_cascade:
             current_activations = self.both_activations[self.counter]     
         self.downbeat_particles_show[1].set_offsets(np.c_[self.st2.state_positions[part1[:, 0]], np.max(self.st2.state_intervals) - self.st2.state_intervals[part1[:, 0]]])
         self.downbeat_particles_show[2].set_alpha(current_activations[1])
-        self.down_particles_swarm.set_xdata(x=position_downs)
+        #self.down_particles_swarm.set_xdata(x=position_downs)
         plt.pause(0.0000000001)
 
 

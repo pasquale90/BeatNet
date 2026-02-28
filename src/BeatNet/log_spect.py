@@ -8,6 +8,7 @@ from madmom.audio.spectrogram import (
     SpectrogramDifferenceProcessor)
 from madmom.processors import ParallelProcessor, SequentialProcessor
 from BeatNet.common import *
+import numpy as np
 
 
 # feature extractor that extracts magnitude spectrogoram and its differences  
@@ -36,8 +37,12 @@ class LOG_SPECT(FeatureModule):
             multi.append(SequentialProcessor((frames, stft, filt, spec, diff)))
         # stack the features and processes everything sequentially
         self.pipe = SequentialProcessor((sig, multi, np.hstack))
+        
+    def return_dummy_array(self):
+        return np.zeros((2, 10))
+        
 
     def process_audio(self, audio):
-        feats = self.pipe(audio)
+        feats = self.pipe(audio)        
         return feats.T
 

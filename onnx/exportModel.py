@@ -36,15 +36,28 @@ print("Expected dim_in:", model.base_model.dim_in)
 dummy_input = torch.randn(1, 1, 272).to(device)
 
 # export to ONNX
-torch.onnx.export(
+# torch.onnx.export(
+#     model,
+#     dummy_input,
+#     model_path,
+#     input_names=["input"],
+#     output_names=["output"],
+#     dynamic_axes={"input": {0: "batch", 1: "time"}, "output": {0: "batch", 2: "time"}},
+#     opset_version=17
+# )
+
+
+onnx_program = torch.onnx.export(
     model,
     dummy_input,
-    model_path,
+    model_path, 
     input_names=["input"],
     output_names=["output"],
-    dynamic_axes={"input": {0: "batch", 1: "time"}, "output": {0: "batch", 2: "time"}},
+    dynamic_axes={"input": {0: "batch", 1: "time"}, 
+                  "output": {0: "batch", 2: "time"}},
     opset_version=17
 )
+# onnx_program.save("model_path")
 
 print(f"Exported to {model_path}")
 
