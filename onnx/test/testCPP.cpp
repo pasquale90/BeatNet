@@ -45,28 +45,25 @@ int main() {
 		std::vector<float> output0; 
 		std::vector<float> output1;
 		std::cout << "Num samples: " << numSamples << std::endl;
-		std::vector<std::pair<int,int>> beatPositions;
-		for (int idx=0; idx < numSamples; ++idx)
+		std::vector<std::pair<int, int>> beatPositions;
+		for (int idx=0; idx + (buffersize) < numSamples; idx += (441 * 2))
 		{
-
-			// read audio in chunks
-			if (numSamples < (idx+1) * buffersize)
-			{
-				break;
-			}
-
 			// predict beats
-			std::vector<float> audioInput(audioFile.samples[0].begin() + idx*buffersize,
-									audioFile.samples[0].begin() + (idx+1)*buffersize);
+			std::vector<float> audioInput(audioFile.samples[0].begin() + idx,
+										  audioFile.samples[0].begin() + idx + buffersize);
 			std::vector<float> output;
-
+			
 			if (model.process(audioInput, output))
 			{
+				output0.push_back(output[0]);
+				output1.push_back(output[1]);
+
 				int argmax = std::max_element(output.begin(), output.end()) - output.begin();
 
 				if (argmax != 2)// if beat
 				{
-					beatPositions.push_back({idx, argmax});
+					beatPositions.push_back({ idx, argmax });
+					time_beats.push_back(((float)idx) + 2 * (-705 + (3 * 441)));
 				}
 			}
 			
