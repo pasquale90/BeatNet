@@ -77,7 +77,75 @@ int main() {
 				outFile.close();
 			}
 		}
-		
+
+
+		if (!time_beats.empty())
+		{
+			std::vector<float> difference(time_beats.size() - 1);
+			std::vector<float> bpm(time_beats.size() - 1);
+
+			std::transform(time_beats.begin() + 1, time_beats.end(),
+				time_beats.begin(), difference.begin(), std::minus());
+
+			for (int i = 0; i < difference.size(); ++i)
+			{
+				bpm[i] = 60.0f / difference[i];
+			}
+
+			// std::cout << std::endl;
+			// for (auto& val : time_beats)
+			// {
+			// 	std::cout << val << std::endl;
+			// }
+			// std::cout << std::endl;
+		}
+		auto signal = audioFile.samples[0];
+		std::vector<float> times_plot(signal.size(), std::nan("1"));
+
+		for (auto& i : time_beats)
+		{
+			times_plot[(int) i] = 1.5f;
+		}
+		//signal.erase(signal.begin() + signal.size() /4, signal.end());
+		//times_plot.erase(times_plot.begin() + times_plot.size() / 4, times_plot.end());
+
+		std::vector<std::pair<float, float>> plot_output0(output0.size());
+		std::vector<std::pair<float, float>> plot_output1(output0.size());
+
+		float t0 = 0.0f;
+		float dt = 1.0f / static_cast<float>(samplerate);
+		for (float i = 0.0f; i < plot_output0.size(); ++i)
+		{
+		plot_output0[i] = { t0 + (1441 * 2)*dt + (i *(441*2)* dt) , output0[i] };
+		plot_output1[i] = { t0 + (1441 * 2)*dt + (i *(441*2)* dt) , output1[i] };
+		}
+
+
+		std::vector<float> time_vec(signal.size());
+		{
+			float index = 0.0f;
+			std::generate(time_vec.begin(), time_vec.end(), [t0, dt, &index]() {return t0 + (index++ * dt); });
+		}
+		{
+			int index = 0;
+			auto end = std::remove_if(signal.begin(), signal.end(), [&index](float x) {if (index > 9) index = 0; return index++ > 0; });
+			signal.erase(end, signal.end());
+		}
+
+		{
+			int index = 0;
+			auto end = std::remove_if(time_vec.begin(), time_vec.end(), [&index](float x) {if (index > 9) index = 0; return index++ > 0; });
+			time_vec.erase(end, time_vec.end());
+		}
+
+		std::vector<std::pair<float, float>> plot_signal(time_vec.size());
+		for (float i = 0.0f; i < time_vec.size(); ++i)
+		{
+			plot_signal[i] = { time_vec[i] , signal[i] };
+		}
+
+		int stop = 0;
+
 		std::cout << "Finished processing " << audiopath << " (" << numSamples << " samples)" << std::endl;
 	}
 	return 0;
