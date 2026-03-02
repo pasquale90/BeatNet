@@ -8,20 +8,28 @@
 static int samplerate = 44100;
 static int buffersize = 2293 * 2;
 typedef float bitQuantization; 
-static const std::string wavDir = "samples";
+namespace fs = std::filesystem;
+
+fs::path wavDir = fs::current_path().parent_path().parent_path().parent_path() / "samples";
 
 
 int main() {
 
 	std::cout<<"Testing cpp implementation of BeatNet"<<std::endl;
+	std::cout << wavDir.string() << std::endl;
 
 	// iterate over files
 	for(const auto & audioSample : std::filesystem::directory_iterator(wavDir)) 
 	{
-		
-		std::string audiopath = (std::filesystem::current_path() / audioSample).string();
-		std::cout<<"Processing "<<audiopath<<std::endl;
-		
+
+		std::string audiopath = audioSample.path().string();
+		std::cout << "Processing " << audiopath << std::endl;
+
+		// results filenames for output file
+		const std::string fileName = std::filesystem::path(audioSample).stem().string();
+		const std::filesystem::path outputPath = std::filesystem::current_path();
+		const std::string outputFilePath = outputPath.string() + "\\" + fileName + "_cpp";
+
 		// load file
 		AudioFile<bitQuantization> audioFile;
 		audioFile.load(audiopath);
@@ -57,14 +65,10 @@ int main() {
 				}
 			}
 			
-			// store beats into file
-			std::string fileName = std::filesystem::path(audioSample).stem().string();
-			std::string outputPath = "results/" + fileName + "_cpp";
-
-			// write beat positions to file, one per line
-			std::ofstream outFile(outputPath);
-			for (const auto& beat : beatPositions)
-			{	
+				// write beat positions to file, one per line
+				std::ofstream outFile(outputFilePath);
+				for (const auto& beat : beatPositions)
+				{
 				outFile << beat.first << "," << beat.second << std::endl;
 			}
 			outFile.close();
