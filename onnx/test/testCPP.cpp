@@ -40,7 +40,11 @@ int main() {
 		model.setup(sr_inputWavfile, buffersize);
 		
 		int numSamples = audioFile.getNumSamplesPerChannel();
-		std::cout<<"Num samples: "<<numSamples<<std::endl;
+		
+		std::vector<float> time_beats;
+		std::vector<float> output0; 
+		std::vector<float> output1;
+		std::cout << "Num samples: " << numSamples << std::endl;
 		std::vector<std::pair<int,int>> beatPositions;
 		for (int idx=0; idx < numSamples; ++idx)
 		{
