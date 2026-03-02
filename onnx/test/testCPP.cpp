@@ -33,10 +33,11 @@ int main() {
 		// load file
 		AudioFile<bitQuantization> audioFile;
 		audioFile.load(audiopath);
+		const double sr_inputWavfile = static_cast<double>(audioFile.getSampleRate());
 
 		// initialize BeatNet (note:processes float buffers)
 		BeatNet model;
-		model.setup(static_cast<double>(samplerate), buffersize);
+		model.setup(sr_inputWavfile, buffersize);
 		
 		int numSamples = audioFile.getNumSamplesPerChannel();
 		std::cout<<"Num samples: "<<numSamples<<std::endl;
