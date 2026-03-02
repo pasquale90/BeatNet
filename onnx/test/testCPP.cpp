@@ -19,7 +19,7 @@ int main() {
 	std::cout << wavDir.string() << std::endl;
 
 	// iterate over files
-	for(const auto & audioSample : std::filesystem::directory_iterator(wavDir)) 
+	for (const auto& audioSample : std::filesystem::directory_iterator(wavDir))
 	{
 
 		std::string audiopath = audioSample.path().string();
@@ -38,7 +38,7 @@ int main() {
 		// initialize BeatNet (note:processes float buffers)
 		BeatNet model;
 		model.setup(sr_inputWavfile, buffersize);
-		
+
 		int numSamples = audioFile.getNumSamplesPerChannel();
 		
 		std::vector<float> time_beats;
@@ -66,15 +66,18 @@ int main() {
 					time_beats.push_back(((float)idx) + 2 * (-705 + (3 * 441)));
 				}
 			}
-			
+			if (beatPositions.size() > 0)	
+			{
 				// write beat positions to file, one per line
 				std::ofstream outFile(outputFilePath);
 				for (const auto& beat : beatPositions)
 				{
-				outFile << beat.first << "," << beat.second << std::endl;
+					outFile << beat.first << "," << beat.second << std::endl;
+				}
+				outFile.close();
 			}
-			outFile.close();
 		}
+		
 		std::cout << "Finished processing " << audiopath << " (" << numSamples << " samples)" << std::endl;
 	}
 	return 0;
