@@ -5,8 +5,8 @@
 #include "BeatNet.h"
 #include <utility>
 
-static int samplerate = 44100;
-static int buffersize = 2293 * 2;
+//static int samplerate = 44100;
+static int buffersize = 2293; // at 22050 samples/sec
 typedef float bitQuantization; 
 namespace fs = std::filesystem;
 
@@ -33,11 +33,19 @@ int main() {
 		// load file
 		AudioFile<bitQuantization> audioFile;
 		audioFile.load(audiopath);
-		const double sr_inputWavfile = static_cast<double>(audioFile.getSampleRate());
+
+		// values of parameters at the samplerate of the loaded file
+		const float sr_inputWavfile = static_cast<float>(audioFile.getSampleRate());
+		const int sr_Ratio = static_cast<int>(sr_inputWavfile / SR_BEATNET); // 44100 / 22050 = 2 
+		const float dt = 1.0f / sr_inputWavfile;
+
+		const int buffersize_current = buffersize * sr_Ratio;
+		const int FRAME_LENGTH_current = FRAME_LENGTH * sr_Ratio;
+		const int HOP_SIZE_current = HOP_SIZE * sr_Ratio;
 
 		// initialize BeatNet (note:processes float buffers)
 		BeatNet model;
-		model.setup(sr_inputWavfile, buffersize);
+		model.setup(sr_inputWavfile, buffersize_current);
 
 		int numSamples = audioFile.getNumSamplesPerChannel();
 		
@@ -46,11 +54,11 @@ int main() {
 		std::vector<float> output1;
 		std::cout << "Num samples: " << numSamples << std::endl;
 		std::vector<std::pair<int, int>> beatPositions;
-		for (int idx=0; idx + (buffersize) < numSamples; idx += (441 * 2))
+		for (int idx=0; idx + (buffersize_current) < numSamples; idx += (HOP_SIZE_current))
 		{
 			// predict beats
 			std::vector<float> audioInput(audioFile.samples[0].begin() + idx,
-										  audioFile.samples[0].begin() + idx + buffersize);
+										  audioFile.samples[0].begin() + idx + (buffersize_current));
 			std::vector<float> output;
 			
 			if (model.process(audioInput, output))
@@ -63,7 +71,9 @@ int main() {
 				if (argmax != 2)// if beat
 				{
 					beatPositions.push_back({ idx, argmax });
-					time_beats.push_back(((float)idx) + 2 * (-705 + (3 * 441)));
+
+					float time_index = (float)idx + (-(FRAME_LENGTH_current / 2) + (3 * HOP_SIZE_current));
+					time_beats.push_back(time_index);
 				}
 			}
 			if (beatPositions.size() > 0)	
@@ -113,11 +123,11 @@ int main() {
 		std::vector<std::pair<float, float>> plot_output1(output0.size());
 
 		float t0 = 0.0f;
-		float dt = 1.0f / static_cast<float>(samplerate);
 		for (float i = 0.0f; i < plot_output0.size(); ++i)
 		{
-		plot_output0[i] = { t0 + (1441 * 2)*dt + (i *(441*2)* dt) , output0[i] };
-		plot_output1[i] = { t0 + (1441 * 2)*dt + (i *(441*2)* dt) , output1[i] };
+			auto time = t0 + ((FRAME_LENGTH_current) + i * (HOP_SIZE_current)) * dt;
+			plot_output0[i] = { time , output0[i] };
+			plot_output1[i] = { time , output1[i] };
 		}
 
 
