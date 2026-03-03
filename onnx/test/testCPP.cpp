@@ -10,25 +10,25 @@ static int buffersize = 2293; // at 22050 samples/sec
 typedef float bitQuantization; 
 namespace fs = std::filesystem;
 
-fs::path wavDir = fs::current_path().parent_path().parent_path().parent_path() / "samples";
-
+const fs::path currentFilePath = fs::path(__FILE__).parent_path();
+const fs::path samplesPath = currentFilePath / "samples";
+const fs::path resultsPath = currentFilePath / "results";
 
 int main() {
 
 	std::cout<<"Testing cpp implementation of BeatNet"<<std::endl;
-	std::cout << wavDir.string() << std::endl;
 
 	// iterate over files
-	for (const auto& audioSample : std::filesystem::directory_iterator(wavDir))
+	for (const auto& audioSample : fs::directory_iterator(samplesPath))
 	{
 
 		std::string audiopath = audioSample.path().string();
 		std::cout << "Processing " << audiopath << std::endl;
 
 		// results filenames for output file
-		const std::string fileName = std::filesystem::path(audioSample).stem().string();
-		const std::filesystem::path outputPath = std::filesystem::current_path();
-		const std::string outputFilePath = outputPath.string() + "\\" + fileName + "_cpp";
+		const std::string fileName = fs::path(audioSample).stem().string();
+		const fs::path outputPath = resultsPath;
+		const fs::path outputFilePath = outputPath / std::string(fileName + "_cpp");
 
 		// load file
 		AudioFile<bitQuantization> audioFile;
@@ -52,7 +52,6 @@ int main() {
 		std::vector<float> time_beats;
 		std::vector<float> output0; 
 		std::vector<float> output1;
-		std::cout << "Num samples: " << numSamples << std::endl;
 
 		std::vector<std::pair<float, float>> beatPositions;
 		std::vector<std::pair<float, float>> downBeatPositions;		
