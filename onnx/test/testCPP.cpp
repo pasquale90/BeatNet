@@ -53,7 +53,10 @@ int main() {
 		std::vector<float> output0; 
 		std::vector<float> output1;
 		std::cout << "Num samples: " << numSamples << std::endl;
-		std::vector<std::pair<int, int>> beatPositions;
+
+		std::vector<std::pair<float, float>> beatPositions;
+		std::vector<std::pair<float, float>> downBeatPositions;		
+
 		for (int idx=0; idx + (buffersize_current) < numSamples; idx += (HOP_SIZE_current))
 		{
 			// predict beats
@@ -63,29 +66,39 @@ int main() {
 			
 			if (model.process(audioInput, output))
 			{
+				// output[0] : downbeat
+				// output[1] : beat
+				// output[2] : no beat
 				output0.push_back(output[0]);
 				output1.push_back(output[1]);
 
-				int argmax = std::max_element(output.begin(), output.end()) - output.begin();
+				int indexMaxProbability = std::max_element(output.begin(), output.end()) - output.begin();
 
-				if (argmax != 2)// if beat
+				float time_index = (float)idx + (-(FRAME_LENGTH_current / 2) + (3 * HOP_SIZE_current));
+				switch (indexMaxProbability)
 				{
-					beatPositions.push_back({ idx, argmax });
-
-					float time_index = (float)idx + (-(FRAME_LENGTH_current / 2) + (3 * HOP_SIZE_current));
-					time_beats.push_back(time_index);
+					case 0: // downbeat
+						time_beats.push_back(time_index);
+						downBeatPositions.push_back({ time_index * dt, 0.3f });
+						break;
+					case 1: // beat
+						time_beats.push_back(time_index);
+						beatPositions.push_back({ time_index * dt, 0.31f }); 
+						break;
 				}
+
 			}
-			if (beatPositions.size() > 0)	
+		}
+
+		// write beat positions to file, one per line
+		if (beatPositions.size() > 0)
+		{			
+			std::ofstream outFile(outputFilePath);
+			for (const auto& beat : beatPositions)
 			{
-				// write beat positions to file, one per line
-				std::ofstream outFile(outputFilePath);
-				for (const auto& beat : beatPositions)
-				{
-					outFile << beat.first << "," << beat.second << std::endl;
-				}
-				outFile.close();
+				outFile << beat.first << "," << 1 << std::endl;
 			}
+			outFile.close();
 		}
 
 
