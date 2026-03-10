@@ -16,10 +16,10 @@ class BeatNetWithSoftmax(nn.Module):
         logits = self.base_model(x)
         return self.softmax(logits)
     
-model_path = "beatnet_bda.onnx"
+model_path = "beatnet_bda_DBN.onnx"
 
 # Initialize BeatNet
-estimator = BeatNet(1, mode='stream', inference_model='PF', plot=[], thread=False)
+estimator = BeatNet(1, mode='stream', inference_model='DBN', plot=[], thread=False)
 
 # Get the PyTorch model (BDA) + softmax
 model = BeatNetWithSoftmax(estimator.model)

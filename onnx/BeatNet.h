@@ -83,7 +83,7 @@ public:
 private:    
     float SR;
     int bufferSize;
-	const std::string defaultModelPath{ "beatnet_bda.onnx" };
+	const std::string defaultModelPath{ "beatnet_bda_BDN.onnx" };
 
     // ONNX Runtime
     const OrtApi* ort = nullptr;
