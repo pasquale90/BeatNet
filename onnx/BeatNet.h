@@ -79,6 +79,8 @@ public:
     void setup(double sampleRate, int samplesPerBlock);
 
     bool process(const std::vector<float>& raw_input, std::vector<float>& output);
+
+    std::vector<std::vector<float>> features_extracted;
     
 private:    
     float SR;
@@ -135,8 +137,8 @@ private:
     std::vector<float> log_fb;
     std::vector<float> prev_log_fb;
     std::vector<float> diff;
-    
 
+   
     // helper functions - preprocess for feature extraction and inference for model utilization
     bool preprocess(const std::vector<float>& raw_input, std::vector<float>& preprocessed_input);
     void inference(std::vector<float>& output);

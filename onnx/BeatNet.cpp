@@ -168,6 +168,8 @@ bool BeatNet::preprocess(const std::vector<float>& raw_input, std::vector<float>
     
     // stack log spectrum and spectral difference
     hstack(log_fb, diff, preprocessed_input);
+
+    features_extracted.push_back(preprocessed_input);
     return true;
 }
 

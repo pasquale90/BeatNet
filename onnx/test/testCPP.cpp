@@ -49,14 +49,18 @@ int main() {
 
 		// predict beats and downbeats
 		std::vector<std::pair<float, int>> beatPositions;
-		std::vector<std::pair<float, int>> downBeatPositions;		
+		std::vector<std::pair<float, int>> downBeatPositions;
+
+		std::vector<float> time_vec;
+		std::vector<float> beatActivations_vec;
+		std::vector<float> downbeatActivations_vec;
 
 		for (int idx=0; idx + buffersize_current < numSamples; idx += HOP_SIZE_current)
 		{
 			std::vector<float> audioBlockInput(audioFile.samples[0].begin() + idx,
 										  audioFile.samples[0].begin() + idx + buffersize_current);
 			std::vector<float> output;
-			
+
 			if (model.process(audioBlockInput, output))
 			{
 				// output[0] : downbeat
@@ -65,6 +69,12 @@ int main() {
 
 				float time_index = (float)idx + (-(FRAME_LENGTH_current / 2) + (3 * HOP_SIZE_current));
 				float time_seconds = time_index * dt;
+
+				time_vec.push_back(time_seconds);
+				beatActivations_vec.push_back(output[1]);
+				//downbeatActivations_vec.push_back(1.0f - output[2]);
+				downbeatActivations_vec.push_back(output[0]);
+
 
 				int indexMaxProbability = std::max_element(output.begin(), output.end()) - output.begin();
 				switch (indexMaxProbability)
@@ -86,6 +96,34 @@ int main() {
 			for (const auto& [time, beatValue] : beatPositions)
 			{
 				outFile << time << "," << beatValue << std::endl;
+			}
+			outFile.close();
+		}
+
+		// write beat activations 
+		if (beatActivations_vec.size() > 0)
+		{
+			std::ofstream outFile(outputPath / std::string(fileName + "_beatActivations_cpp"));
+			for (int i= 0; i < beatActivations_vec.size(); ++i)
+			{
+				outFile << time_vec[i] << " " << beatActivations_vec[i] << " " << downbeatActivations_vec[i] << std::endl;
+			}
+			outFile.close();
+		}
+
+		// write features extracted
+		const auto& features = model.features_extracted;
+		if (features.size() > 0)
+		{
+			std::ofstream outFile(outputPath / std::string(fileName + "_features_cpp"));
+			for (const auto& feat_vec: features)
+			{
+				int lastindex = feat_vec.size() - 1;
+				for (int i = 0; i < lastindex; ++i)
+					outFile << feat_vec[i] << " ";
+
+				// print the last value with '\n'
+				outFile << feat_vec[lastindex] << std::endl;
 			}
 			outFile.close();
 		}
