@@ -55,7 +55,8 @@ int main() {
 		std::vector<float> beatActivations_vec;
 		std::vector<float> downbeatActivations_vec;
 
-		for (int idx=0; idx + buffersize_current < numSamples; idx += HOP_SIZE_current)
+		int startindex = HOP_SIZE_current; //skip the first frame
+		for (int idx= HOP_SIZE_current; idx + buffersize_current < numSamples; idx += HOP_SIZE_current)
 		{
 			std::vector<float> audioBlockInput(audioFile.samples[0].begin() + idx,
 										  audioFile.samples[0].begin() + idx + buffersize_current);
@@ -67,13 +68,18 @@ int main() {
 				// output[1] : beat
 				// output[2] : no beat
 
-				float time_index = (float)idx + (-(FRAME_LENGTH_current / 2) + (3 * HOP_SIZE_current));
-				float time_seconds = time_index * dt;
+				// in madmom FramedSignal, with origin = 0, numFrames = 4 -> frame 0 starts at - frameLength/2
+				// (zero padding between -frameLength/2 and zero)
+				// see : 
+				float time_index = (float)idx + (-(FRAME_LENGTH_current / 2) + (3 * HOP_SIZE_current) + FRAME_LENGTH_current);
+				//float time_index = (float)idx +  4 * HOP_SIZE_current;
 
+				float time_seconds = time_index * dt;
+				
 				time_vec.push_back(time_seconds);
-				beatActivations_vec.push_back(output[1]);
-				//downbeatActivations_vec.push_back(1.0f - output[2]);
 				downbeatActivations_vec.push_back(output[0]);
+				beatActivations_vec.push_back(output[1]);
+				
 
 
 				int indexMaxProbability = std::max_element(output.begin(), output.end()) - output.begin();
@@ -100,10 +106,10 @@ int main() {
 			outFile.close();
 		}
 
-		// write beat activations 
+		// write beat and downbeat activations 
 		if (beatActivations_vec.size() > 0)
 		{
-			std::ofstream outFile(outputPath / std::string(fileName + "_beatActivations_cpp"));
+			std::ofstream outFile(outputPath / std::string(fileName + "_beat_activations_cpp"));
 			for (int i= 0; i < beatActivations_vec.size(); ++i)
 			{
 				outFile << time_vec[i] << " " << beatActivations_vec[i] << " " << downbeatActivations_vec[i] << std::endl;
@@ -116,6 +122,7 @@ int main() {
 		if (features.size() > 0)
 		{
 			std::ofstream outFile(outputPath / std::string(fileName + "_features_cpp"));
+
 			for (const auto& feat_vec: features)
 			{
 				int lastindex = feat_vec.size() - 1;
