@@ -70,9 +70,8 @@ BeatNet::BeatNet(
     env(nullptr), session(nullptr), session_options(nullptr),
     memory_info(nullptr), allocator(nullptr), run_options(nullptr),
     input_name(nullptr), output_name(nullptr),
-    signal_processor(FRAME_LENGTH, HOP_SIZE),
-    fft_processor(FRAME_LENGTH, FFT_SIZE, FRAME_SIZE_POW2),
-    filterbank_processor(BANKS_PER_OCTAVE, FFT_SIZE, SR_BEATNET, 30.0f, 11025.0f, true, true),
+    fft_processor(FRAME_LENGTH, FFT_SIZE, FRAME_LENGTH),
+    filterbank_processor(BANKS_PER_OCTAVE, FFT_SIZE, SR_BEATNET, 30.0f, 17000.0f, true, true),
     SR(0),bufferSize(0)
 {
 
@@ -136,18 +135,38 @@ void BeatNet::setup(double sampleRate, int samplesPerBlock) {
 
 bool BeatNet::preprocess(const std::vector<float>& raw_input, std::vector<float>& preprocessed_input) {
         
-    std::vector<float> resampled = resampler.resample(raw_input);
-    std::vector<float> frame;
-    bool valid_frame = signal_processor.process(resampled,frame);
-    if (!valid_frame) {
-        // std::cout<<"invalid frame and will be invalid for the first ~"<<FRAME_LENGTH/resampled.size()-1<<" frames"<<std::endl;
-        return false;
-    }
-        
-    spectrum = fft_processor.compute_fft(frame);
-    filters = filterbank_processor.apply(spectrum);
-    log_fb = log_compress(filters);
-    diff = spectral_diff(log_fb, prev_log_fb);
+    std::vector<float> resampledSignal = resampler.resample(raw_input); 
+
+    // slice original signal to Frames
+    const int nFrames = 4;
+    FramedSignal framedSignal{ resampledSignal , nFrames, FRAME_LENGTH, HOP_SIZE };
+    
+    // spectral difference
+    // last frame
+    auto frame_3 = framedSignal[3];
+    auto spectrum_3 = fft_processor.compute_fft(frame_3);
+    auto filters_3 = filterbank_processor.apply(spectrum_3);
+    auto log_compress_3 = log_compress(filters_3);
+    log_fb = std::move(log_compress_3);
+
+    // frame before
+    auto frame_2 = framedSignal[2]; 
+    auto spectrum_2 = fft_processor.compute_fft(frame_2);
+    auto filters_2 = filterbank_processor.apply(spectrum_2);
+    auto log_compress_2 = log_compress(filters_2);
+    prev_log_fb = std::move(log_compress_2);
+
+    // diff = log_fb3 - log_fb2
+    diff.assign(log_fb.size(), 0.0f);
+    std::transform(log_fb.begin(), log_fb.end(), prev_log_fb.begin(),
+                   diff.begin(),  std::minus());
+
+    // replace negative values with zero
+    std::replace_if(diff.begin(), diff.end(), 
+                    [](float x) {return x < 0.0f; }, 
+                    0.0f);
+    
+    // stack log spectrum and spectral difference
     hstack(log_fb, diff, preprocessed_input);
     return true;
 }
@@ -191,7 +210,7 @@ void BeatNet::inference(std::vector<float>& output) {
         output[i] = output_data[i];
     }
 
-    printOutputShape(output_tensor);
+    // printOutputShape(output_tensor);
 
     ReleaseValue(input_tensor);
     ReleaseValue(output_tensor);

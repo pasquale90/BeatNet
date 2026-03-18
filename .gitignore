@@ -1,0 +1,7 @@
+onnx/out
+onnx/.vs/
+onnx/libs/
+onnx/test/.vs/
+onnx/test/out/
+onnx/test/Audiofile/
+src/BeatNet/__pycache__/

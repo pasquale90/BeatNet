@@ -95,6 +95,7 @@ class BeatNet:
             if self.inference_model != "PF":
                     raise RuntimeError('The infernece model should be set to "PF" for the streaming mode!')
             self.counter = 0
+            # self.beatPositions = []
             while self.stream.is_active():
                 self.activation_extractor_stream()  # Using BeatNet causal Neural network streaming mode to extract activations
                 if self.thread:
@@ -103,7 +104,10 @@ class BeatNet:
                     x.join()    
                 else:
                     output = self.estimator.process(self.pred)
+                    self.beatPositions = output
                 self.counter += 1
+            
+            return self.beatPositions
 
                 
         elif self.mode == "realtime":
